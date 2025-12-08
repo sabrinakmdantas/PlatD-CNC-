@@ -3,378 +3,1053 @@
  */
 /** 
 
-CWS.Renderer = function (id,options) 
+CWS.UI = function (controller) 
 	{
-		options = options || {};
+		this.controller = controller;
+		var topMenu = $("#topMenu");
+		$("#topMenu>nav > ul > li").each(function(i){$(this)
+			.mouseenter(function(){topMenu.css('height','90px');})
+			.mouseleave(function(){topMenu.css('height','45px');})
+		});
+		topMenu.click(
+			function  (ev) 
+			{
+				var title = ev.target.title
+				switch (title)
+				{
+					case "New Project":
+						var d = new CWS.DialogBox(title);
+						d.newProject(controller);
+						break;
+					case "Open Project":
+						var d = new CWS.DialogBox(title);
+						d.openProject(controller);
+						break;
+					case "Open Machine":
+						var d = new CWS.DialogBox(title);
+						d.openMachine(controller);
+						break;
+					case "Workpiece dimensions":
+						var d = new CWS.DialogBox(title);
+						d.workpieceDimensions(controller);
+						break;
+                    case "Export File":
+                        controller.exportToOBJ();
+                        break;
+                    case "Tool":
+                        var d = new CWS.DialogBox(title);
+						d.tool(controller);
+                        break;
+					default:
+						break;
+				}
+			});
 
-		this.displayWireframe = options.displayWireframe===undefined?true:options.displayWireframe;
+		this.elementEditor = $(document.getElementById("editor"));
+		this.elementTopMenu = $(document.getElementById("topMenu"));
+		this.elementCanvasContainer = $(document.getElementById("canvasContainer"));
+		this.elementBottomMenu = $(document.getElementById("bottomMenu"));
+		this.elementBody = $(document.body);
+		this.resize();
+		$("#saveIcon").css('color', 'green').click(function (ev) 
+		{
+			controller.save(true);
+		});
+		$("#autoRunIcon").css('color', 'green').click(function () 
+		{
+			controller.autoRun=!controller.autoRun;
+			if (controller.autoRun===false)
+				$(this).css('color','red');
+			else
+			{
+				$(this).css('color','green');
+				controller.runInterpreter(true);
+			}
+		});
+		$("#runIcon").click(function (ev) 
+		{
+			controller.runInterpreter(true);
+		});
+		$("#run2DIcon").css('color', 'green').click(function (ev) 
+		{
+			controller.run2D=!controller.run2D;
+			if (controller.run2D===false)
+				$(this).css('color','red');
+			else
+			{
+				$(this).css('color','green');
+			}
+			controller.update2D();
+		});
+		/*$("#run3DIcon").css('color', 'green').click(function (ev) 
+		{
+			controller.run3D=!controller.run3D;
+			if (controller.run3D===false)
+				$(this).css('color','red');
+			else
+			{
+				$(this).css('color','green');
+			}
+			controller.update3D();
+		});*/
+		/*var color = "green";
+		if (controller.renderer.displayWireframe===false)
+			color="red";
+		$("#wireframeIcon").css('color', color).click(function (ev) 
+		{
+			controller.runWireframe=!controller.runWireframe;
+			if (controller.runWireframe===false)
+			{
+				$(this).css('color','red');
+			}
+			else
+			{
+				$(this).css('color','green');
+			}
+		});*/
+/** 
+		$("#runAnimationIcon").click(function (ev) 
+		{
+			controller.runAnimation();
+		});
+	}
+*/
+/** 
+CWS.UI.prototype.constructor = CWS.UI;
 
-		this.renderer = new THREE.WebGLRenderer({clearColor: 0xffffff,antialias: true });
-		// this.renderer.domElement.style.background = "#ffffff";
-		this.renderer.autoClear = true;
-		this.renderer.setClearColor( 0xffffff );
-		this.renderer.setPixelRatio( window.devicePixelRatio );
-		this.renderer.setSize( window.innerWidth, window.innerHeight );
+CWS.UI.prototype.resize = function()
+	{
+		var width = this.elementBody.innerWidth();
+		var height = this.elementBody.innerHeight();
 		
-		this.renderer.domElement.id=id;
-		this.renderer.domElement.style['z-index']=41;
+		var editorWidth;
+		if (this.elementEditor.css('display')==='none')
+			editorWidth = 0;
+		else
+			editorWidth = this.elementEditor.innerWidth();
 
-		this.scene = new THREE.Scene();
-	
-		var ambientLight = new THREE.AmbientLight( 0x000000 );
-		this.scene.add( ambientLight );
+		this.elementTopMenu.innerWidth(width-editorWidth);
+		this.elementCanvasContainer.innerWidth(width-editorWidth);
+		this.controller.renderer.setSize(width-editorWidth,height);
+		this.elementBottomMenu.innerWidth(width-editorWidth);
+	};
 
-		var lights = [];
-		lights[0] = new THREE.PointLight( 0xffffff, 1, 0 );
-		lights[1] = new THREE.PointLight( 0xffffff, 1, 0 );
-		lights[2] = new THREE.PointLight( 0xffffff, 1, 0 );
-	
-		lights[0].position.set( 0, 200, 0 );
-		lights[1].position.set( 100, 200, 100 );
-		lights[2].position.set( -100, -200, -100 );
+CWS.UI.prototype.createStats = function (v) 
+	{
+		if (v===false)
+			return {update:function(){}};
+		var maincanvasdiv = document.getElementById("canvasContainer");
+		var width = maincanvasdiv.offsetWidth;
+		var height = maincanvasdiv.offsetHeight;
 
-		this.scene.add( lights[0] );
-		this.scene.add( lights[1] );
-		this.scene.add( lights[2] );*/
+		stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.bottom = '0px';
+		stats.domElement.style.right = '0px';
+		maincanvasdiv.appendChild( stats.domElement );
+		return stats;
+	};
 
-		// var ambientLight = new THREE.AmbientLight( Math.random() * 0x10 );
-		// this.scene.add( ambientLight );
-
-		// var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-		// directionalLight.position.x = Math.random() - 0.5;
-		// directionalLight.position.y = Math.random() - 0.5;
-		// directionalLight.position.z = Math.random() - 0.5;
-		// directionalLight.position.normalize();
-		// this.scene.add( directionalLight );
-
-		// var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-		// directionalLight.position.x = Math.random() - 0.5;
-		// directionalLight.position.y = Math.random() - 0.5;
-		// directionalLight.position.z = Math.random() - 0.5;
-		// directionalLight.position.normalize();
-		// this.scene.add( directionalLight );
-
-		/**this.width = options.width || 512;
-		this.height = options.height || 512;
-
-		this.camera = new THREE.PerspectiveCamera(20, this.width / this.height, 0.1, 2000);
-		this.camera.position.x = 0;
-		this.camera.position.y = 0;
-		this.camera.position.z = 100;
-		this.camera.lookAt( this.scene.position );
+CWS.DialogBox = function (title)
+	{
+		$("#dialogBox").remove();
+		
+		this.dialog = $( '<div id="dialogBox" title="'+title+'" ></div>');
 	}
 
-CWS.Renderer.prototype = 
+CWS.DialogBox.prototype.constructor = CWS.DialogBox;
+
+CWS.DialogBox.prototype.newProject = function (controller)
 	{
-		get domElement()
+		var html = '<form id="menuNewProject">'+
+			'<ul>'+
+			'  <li>'+
+			'    <label for= "projectName" >Project Name</label>'+
+			'    <input type= "text" name= "projectName" />'+
+			'  </li>'+
+			'  <li>'+
+			'    <label for= "machineType" >Machine</label>'+
+			'    <input type="radio" name="machineType" value="Lathe" checked> Lathe'+
+			'    <input type="radio" name="machineType" value="Mill"> Mill'+
+			'    <input type="radio" name="machineType" value="3D Printer"> 3D Printer'+
+			'  </li>'+
+			'</ul>'+
+			'</form>';
+		this.dialog.append($(html));
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	            "Create": function()
+	            {
+	            	var values = {};
+	            	var result = $(this.firstChild).serializeArray();
+	            	for (var i = 0; i < result.length; i++) 
+	            	{
+	            		values[result[i].name]=result[i].value;
+	            	}
+	              	controller.createProject(values);
+	              	$(this).dialog("close");
+	            },
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
+	};
+
+CWS.DialogBox.prototype.openProject = function (controller)
+	{
+		html = '<ul class="tableList">';
+		var fileList = Object.keys(controller.listProjects());
+		for (var i = 0; i < fileList.length; i++) 
 		{
-			return this.renderer.domElement;
-		},
-		set domElement(val)
-		{
-			this.renderer.domElement = val;
-		},
-	};
-
-CWS.Renderer.prototype.constructor = CWS.Renderer;
-
-CWS.Renderer.prototype.lookAtLathe = function (dimensions)
-	{
-		var aspect = this.camera.aspect;
-		var fov = 20;
-		var distance = dimensions.y/2/Math.tan( (fov/2)  * (Math.PI/180)  );
-		var cameraPosition = new THREE.Vector3(0,0,distance);
-		this.camera.position.copy( cameraPosition );
-		this.camera.far = 20*Math.max(dimensions.x,dimensions.y);
-		this.camera.near = 0.05*Math.max(dimensions.x,dimensions.y);
-		this.camera.updateProjectionMatrix();
-	};
-
-CWS.Renderer.prototype.lookAtMill = function (dimensions)
-	{
-		var aspect = this.camera.aspect;
-		var fov = 20;
-		var distance = Math.max(dimensions.x,dimensions.y)/2/Math.tan( (fov/2)  * (Math.PI/180)  );
-		var cameraPosition = new THREE.Vector3(0,0,distance);
-		this.camera.position.copy( cameraPosition );
-		this.camera.far = 20*Math.max(dimensions.x,dimensions.y);
-		this.camera.near = 0.05*Math.max(dimensions.x,dimensions.y);
-		this.camera.updateProjectionMatrix();
-	};
-
-CWS.Renderer.prototype.lookAt3DPrinter = function (center,radius)
-	{
-		if (!center || !radius)
-			return;
-
-		var distance =(center.z+radius)/2/Math.tan( (20/2)  * (Math.PI/180)  );
-		var cameraPosition = new THREE.Vector3(0,0,distance);
-		this.camera.position.copy( cameraPosition );
-		this.camera.far = 2000;
-		this.camera.near = 1;
-		this.camera.updateProjectionMatrix();
-	};
-
-CWS.Renderer.prototype.setCamera = function (camera)
-	{
-		if (camera=="Perspective")
-			this.camera.toPerspective();
-		else if (camera=="Orthographic")
-			this.camera.toOrthographic();
-	};
-
-CWS.Renderer.prototype.setSize = function (width,height) 
-	{
-		this.width = width;
-		this.height = height;
-		this.camera.aspect = this.width / this.height;
-		this.camera.updateProjectionMatrix();
-		this.renderer.setSize( this.width, this.height );
-	};
-
-CWS.Renderer.prototype.removeMesh = function (meshName)
-	{
-		if (meshName!==undefined)
-		{
-			var mesh = this.scene.getObjectByName(meshName);
-			if (mesh)
-				this.scene.remove(mesh);
+			html += '<li><span class="icon icon-file-text2"></span>'+fileList[i]+'</li>';
 		}
+		html += "</ul>";
+        var dialog = this.dialog;
+		html = $(html).click(function (event) 
+			{
+                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
+                    return;
+                var projectName="";
+                if (event.target.tagName.toLocaleLowerCase()=="li")
+                {
+                    projectName = event.target.textContent;
+                }
+                else
+                {
+                    projectName = event.target.parentElement.textContent;
+                }
+                controller.openProject(projectName);
+                dialog.dialog("close");
+			});
+		this.dialog.append(html);
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
 	};
 
-CWS.Renderer.prototype.render = function (controls)
+CWS.DialogBox.prototype.openMachine = function (controller)
 	{
-		if (this['2DWorkpiece'] && this['2DWorkpiece'].animation)
-		{
-			this['2DWorkpiece'].animation.next()
-		}*/
-		/*if (this['3DWorkpiece'] && this['3DWorkpiece'].animation)
-		{
-			this['3DWorkpiece'].animation.next();
-		}*//** 
-		const obj3D = this.scene.getObjectByName("3DWorkpiece");
-		if (obj3D) this.scene.remove(obj3D);
-		
-		this.renderer.render( this.scene, this.camera );
+		html = '<ul class="tableList">'+
+		'  <li><span class="icon icon-lathe"></span>Lathe</li>'+
+		'  <li><span class="icon icon-mill"></span>Mill</li>'+
+		'  <li><span class="icon icon-printer"></span>3D Printer</li>'+
+		'</ul>';
+        var dialog = this.dialog;
+		html = $(html).click(function (event) 
+			{
+                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
+                    return;
+                var machineName="";
+                if (event.target.tagName.toLocaleLowerCase()=="li")
+                {
+                    machineName = event.target.textContent;
+                }
+                else
+                {
+                    machineName = event.target.parentElement.textContent;
+                }
+                controller.openMachine(machineName);
+                dialog.dialog("close");
+			});
+		this.dialog.append(html);
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
 	};
 
-CWS.Renderer.prototype.animate = function (b,meshName)
+CWS.DialogBox.prototype.workpieceDimensions = function (controller)
 	{
-		if (this[meshName] && this[meshName].animation)
-			this[meshName].animation.touggleAnimation();
+        var machineType = controller.getMachineType();
+        var workpiece = controller.getWorkpiece();
+        var html = "";
+        if (machineType=="Lathe")
+        {
+            html = '<form id="workpieceDimensions">'+
+            '<ul>'+
+            '  <li>'+
+            '    <label for= "x" >Diameter</label>'+
+            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
+            '  </li>'+
+            '   <li>'+
+            '    <label for= "z" >Lenght</label>'+
+            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
+            '  </li>'+
+            '</ul></form>';
+        }
+        else if (machineType=="Mill")
+        {
+            html = '<form id="workpieceDimensions">'+
+            '<ul>'+
+            '  <li>'+
+            '    <label for= "x" >Size X</label>'+
+            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
+            '  </li>'+
+            '  <li>'+
+            '    <label for= "y" >Size Y</label>'+
+            '    <input type= "text" name= "y" value="'+workpiece.y+'"/>'+
+            '  </li>'+
+            '   <li>'+
+            '    <label for= "z" >Size Z</label>'+
+            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
+            '  </li>'+
+            '</ul></form>';
+        }
+        else if (machineType=="3D Printer")
+        {
+            html = '<form id="workpieceDimensions">'+
+            '<ul>'+
+            '  <li>'+
+            '    <label for= "filamentDiameter" >Filament Diameter</label>'+
+            '    <input type= "text" name="filamentDiameter" value="'+workpiece.filamentDiameter+'"/>'+
+            '  </li>'+
+            '  <li>'+
+            '    <label for= "layerHeight" >Layer Height</label>'+
+            '    <input type= "text" name= "layerHeight" value="'+workpiece.layerHeight+'"/>'+
+            '  </li>'+
+            '</ul></form>';
+        }
+		this.dialog.append($(html));
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	            "Save": function()
+	            {
+	            	var values = {};
+	            	var result = $(this.firstChild).serializeArray();
+	            	for (var i = 0; i < result.length; i++) 
+	            	{
+	            		values[result[i].name]=parseFloat(result[i].value);
+	            	}
+	              	controller.setWorkpieceDimensions(values);
+	              	$(this).dialog("close");
+	            },
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
 	};
 
-CWS.Renderer.prototype.addMesh = function (meshName,mesh)
+CWS.DialogBox.prototype.tool = function (controller)
 	{
-		var meshTemp = this.scene.getObjectByName(meshName);
-		if (meshTemp)
+		var machineType = controller.getMachineType();
+		if (machineType==="Lathe")
 		{
-			this.scene.remove(meshTemp);
-			this[meshName] = undefined;
+			var machine = controller.getMachine();
+			var html = 	'<form id="menuTool">'+
+						'<ul>'+
+						'  <li>'+
+						'    <label for= "toolradius" >Tool radius</label>'+
+						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
+						'  </li>'+
+						'</ul>'+
+						'</form>';
+			this.dialog.append($(html));
+			this.dialog.dialog(
+		      {
+		      width: 400,
+		      buttons: 
+		        {
+		            "Save": function()
+		            {
+		            	var values = {};
+		            	var result = $(this.firstChild).serializeArray();
+		            	for (var i = 0; i < result.length; i++) 
+		            	{
+		            		values[result[i].name]=parseFloat(result[i].value);
+		            	}
+		              	controller.setMachineTool(values);
+		              	$(this).dialog("close");
+		            },
+		          	"Cancel": function()
+		            {
+	          			$(this).dialog("close");
+		            }
+		        }
+		      });
 		}
-		if (mesh.geometry !== undefined)
+		else if (machineType==="Mill")
 		{
-			mesh.name = meshName;
-			if (mesh instanceof THREE.BufferGeometry)
-				mesh.geometry.setDrawRange(0,Infinity);
-			this[meshName] = mesh;
-			this.scene.add(mesh);
+			var machine = controller.getMachine();
+			var html = 	'<form id="menuTool">'+
+						'<ul>'+
+						'  <li>'+
+						'    <label for= "toolradius" >Tool radius</label>'+
+						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
+						'  </li>'+
+						'  <li>'+
+						'    <label for= "toolangle" >Tool angle</label>'+
+						'    <input type= "text" name= "toolangle" value="'+machine.tool.angle+'"/>'+
+						'  </li>'+
+						'</ul>'+
+						'</form>';
+			this.dialog.append($(html));
+			this.dialog.dialog(
+		      {
+		      width: 400,
+		      buttons: 
+		        {
+		            "Save": function()
+		            {
+		            	var values = {};
+		            	var result = $(this.firstChild).serializeArray();
+		            	for (var i = 0; i < result.length; i++) 
+		            	{
+		            		values[result[i].name]=parseFloat(result[i].value);
+		            	}
+		              	controller.setMachineTool(values);
+		              	$(this).dialog("close");
+		            },
+		          	"Cancel": function()
+		            {
+	          			$(this).dialog("close");
+		            }
+		        }
+		      });
+		}
+		else
+		{
+			var html = 	'<ul><li>'+machineType+' does not support tool settings</li></ul>';
+			this.dialog.append($(html));
+			this.dialog.dialog(
+		      {
+		      width: 400,
+		      buttons: 
+		        {
+		            "Ok": function()
+		            {
+		              	$(this).dialog("close");
+		            },
+		          	"Cancel": function()
+		            {
+	          			$(this).dialog("close");
+		            }
+		        }
+		      });
 		}
 	};
 */
-
 /**
  * @author Filipe Caixeta / http://filipecaixeta.com.br/
  */
 
-
-CWS.Renderer = function (id,options) 
+CWS.UI = function (controller) 
 	{
-		options = options || {};
+		this.controller = controller;
+		var topMenu = $("#topMenu");
+		$("#topMenu>nav > ul > li").each(function(i){$(this)
+			.mouseenter(function(){topMenu.css('height','90px');})
+			.mouseleave(function(){topMenu.css('height','45px');})
+		});
+		topMenu.click(
+			function  (ev) 
+			{
+				// Ajuste: garante que pegamos o "title" do elemento clicado OU do ancestral com title
+				var title = $(ev.target).closest('[title]').attr('title') || '';
+				switch (title)
+				{
+					case "New Project":
+						var d = new CWS.DialogBox(title);
+						d.newProject(controller);
+						break;
+					case "Open Project":
+						var d = new CWS.DialogBox(title);
+						d.openProject(controller);
+						break;
+					case "Exercise 1":
+						var d = new CWS.DialogBox(title);
+						d.openMachine(controller);
+						break;
+					case "Workpiece dimensions":
+						var d = new CWS.DialogBox(title);
+						d.workpieceDimensions(controller);
+						break;
+                    case "Export File":
+                        controller.exportToOBJ();
+                        break;
+                    case "Exercise 3":
+                        var d = new CWS.DialogBox(title);
+						d.tool(controller);
+                        break;
+					default:
+						break;
+					case "Exercise 2":
+					var d = new CWS.DialogBox(title);
+					d.machineSettings(controller);
+					break;
+				}
+			});
 
-		//comentei pra que ele comece desativado
-		this.displayWireframe = options.displayWireframe===undefined?true:options.displayWireframe;
-		this.displayWireframe = false; 
-
-		this.renderer = new THREE.WebGLRenderer({clearColor: 0xffffff,antialias: true });
-		// this.renderer.domElement.style.background = "#ffffff";
-		this.renderer.autoClear = true;
-		this.renderer.setClearColor( 0xffffff );
-		this.renderer.setPixelRatio( window.devicePixelRatio );
-		this.renderer.setSize( window.innerWidth, window.innerHeight );
+		this.elementEditor = $(document.getElementById("editor"));
+		this.elementTopMenu = $(document.getElementById("topMenu"));
+		this.elementCanvasContainer = $(document.getElementById("canvasContainer"));
+		this.elementBottomMenu = $(document.getElementById("bottomMenu"));
+		this.elementBody = $(document.body);
+		this.resize();
+		$("#saveIcon").css('color', 'green').click(function (ev) 
+		{
+			controller.save(true);
+		});
+		$("#autoRunIcon").css('color', 'green').click(function () 
+		{
+			controller.autoRun=!controller.autoRun;
+			if (controller.autoRun===false)
+				$(this).css('color','red');
+			else
+			{
+				$(this).css('color','green');
+				controller.runInterpreter(true);
+			}
+		});
+		$("#runIcon").click(function (ev) 
+		{
+			controller.runInterpreter(true);
+		});
+		$("#run2DIcon").css('color', 'green').click(function (ev) 
+		{
+			controller.run2D=!controller.run2D;
+			if (controller.run2D===false)
+				$(this).css('color','red');
+			else
+			{
+				$(this).css('color','green');
+			}
+			controller.update2D();
+		});
+		/*$("#run3DIcon").css('color', 'green').click(function (ev) 
+		{
+			controller.run3D=!controller.run3D;
+			if (controller.run3D===false)
+				$(this).css('color','red');
+			else
+			{
+				$(this).css('color','green');
+			}
+			controller.update3D();
+		});*/
 		
-		this.renderer.domElement.id=id;
-		this.renderer.domElement.style['z-index']=41;
-
-		this.scene = new THREE.Scene();
-	
-		var ambientLight = new THREE.AmbientLight( 0x000000 );
-		this.scene.add( ambientLight );
-
-		var lights = [];
-		lights[0] = new THREE.PointLight( 0xffffff, 1, 0 );
-		lights[1] = new THREE.PointLight( 0xffffff, 1, 0 );
-		lights[2] = new THREE.PointLight( 0xffffff, 1, 0 );
-	
-		lights[0].position.set( 0, 200, 0 );
-		lights[1].position.set( 100, 200, 100 );
-		lights[2].position.set( -100, -200, -100 );
-
-		this.scene.add( lights[0] );
-		this.scene.add( lights[1] );
-		this.scene.add( lights[2] );
-
-		// var ambientLight = new THREE.AmbientLight( Math.random() * 0x10 );
-		// this.scene.add( ambientLight );
-
-		// var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-		// directionalLight.position.x = Math.random() - 0.5;
-		// directionalLight.position.y = Math.random() - 0.5;
-		// directionalLight.position.z = Math.random() - 0.5;
-		// directionalLight.position.normalize();
-		// this.scene.add( directionalLight );
-
-		// var directionalLight = new THREE.DirectionalLight( Math.random() * 0xffffff );
-		// directionalLight.position.x = Math.random() - 0.5;
-		// directionalLight.position.y = Math.random() - 0.5;
-		// directionalLight.position.z = Math.random() - 0.5;
-		// directionalLight.position.normalize();
-		// this.scene.add( directionalLight );
-
-		this.width = options.width || 512;
-		this.height = options.height || 512;
-
-		this.camera = new THREE.PerspectiveCamera(20, this.width / this.height, 0.1, 2000);
-		this.camera.position.x = 0;
-		this.camera.position.y = 0;
-		this.camera.position.z = 100;
-		this.camera.lookAt( this.scene.position );
+		var color = "green";
+		if (controller.renderer.displayWireframe===false)
+			color="red";
+		$("#wireframeIcon").css('color', color).click(function (ev) 
+		{
+			controller.runWireframe=!controller.runWireframe;
+			if (controller.runWireframe===false)
+			{
+				$(this).css('color','red');
+			}
+			else
+			{
+				$(this).css('color','green');
+			}
+		});
+		$("#runAnimationIcon").click(function (ev) 
+		{
+			controller.runAnimation();
+		});
 	}
 
-CWS.Renderer.prototype = 
+CWS.UI.prototype.constructor = CWS.UI;
+
+CWS.UI.prototype.resize = function()
 	{
-		get domElement()
+		var width = this.elementBody.innerWidth();
+		var height = this.elementBody.innerHeight();
+		
+		var editorWidth;
+		if (this.elementEditor.css('display')==='none')
+			editorWidth = 0;
+		else
+			editorWidth = this.elementEditor.innerWidth();
+
+		this.elementTopMenu.innerWidth(width-editorWidth);
+		this.elementCanvasContainer.innerWidth(width-editorWidth);
+		this.controller.renderer.setSize(width-editorWidth,height);
+		this.elementBottomMenu.innerWidth(width-editorWidth);
+	};
+
+CWS.UI.prototype.createStats = function (v) 
+	{
+		if (v===false)
+			return {update:function(){}};
+		var maincanvasdiv = document.getElementById("canvasContainer");
+		var width = maincanvasdiv.offsetWidth;
+		var height = maincanvasdiv.offsetHeight;
+
+		stats = new Stats();
+		stats.domElement.style.position = 'absolute';
+		stats.domElement.style.bottom = '0px';
+		stats.domElement.style.right = '0px';
+		maincanvasdiv.appendChild( stats.domElement );
+		return stats;
+	};
+
+CWS.DialogBox = function (title)
+	{
+		$("#dialogBox").remove();
+		this.dialog = $( '<div id="dialogBox" title="'+title+'" ></div>');
+		// Garante que o elemento está no DOM (ajuda a evitar qualquer atraso do jQuery UI)
+		$("body").append(this.dialog);
+	};
+
+CWS.DialogBox.prototype.constructor = CWS.DialogBox;
+
+CWS.DialogBox.prototype.newProject = function (controller)
+	{
+		var html = '<form id="menuNewProject">'+
+			'<ul>'+
+			'  <li>'+
+			'    <label for= "projectName" >Project Name</label>'+
+			'    <input type= "text" name= "projectName" />'+
+			'  </li>'+
+			'  <li>'+
+			'    <label for= "machineType" >Machine</label>'+
+			'    <input type="radio" name="machineType" value="Lathe" checked> Lathe'+
+			'    <input type="radio" name="machineType" value="Mill"> Mill'+
+			'    <input type="radio" name="machineType" value="3D Printer"> 3D Printer'+
+			'  </li>'+
+			'</ul>'+
+			'</form>';
+		this.dialog.append($(html));
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	            "Create": function()
+	            {
+	            	var values = {};
+	            	var result = $(this.firstChild).serializeArray();
+	            	for (var i = 0; i < result.length; i++) 
+	            	{
+	            		values[result[i].name]=result[i].value;
+	            	}
+	              	controller.createProject(values);
+	              	$(this).dialog("close");
+	            },
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
+	};
+
+CWS.DialogBox.prototype.openProject = function (controller)
+	{
+		html = '<ul class="tableList">';
+		var fileList = Object.keys(controller.listProjects());
+		for (var i = 0; i < fileList.length; i++) 
 		{
-			return this.renderer.domElement;
-		},
-		set domElement(val)
-		{
-			this.renderer.domElement = val;
-		},
-	};
-
-CWS.Renderer.prototype.constructor = CWS.Renderer;
-
-CWS.Renderer.prototype.lookAtLathe = function (dimensions)
-	{
-		var aspect = this.camera.aspect;
-		var fov = 20;
-		var distance = dimensions.y/2/Math.tan( (fov/2)  * (Math.PI/180)  );
-		var cameraPosition = new THREE.Vector3(0,0,distance);
-		this.camera.position.copy( cameraPosition );
-		this.camera.far = 20*Math.max(dimensions.x,dimensions.y);
-		this.camera.near = 0.05*Math.max(dimensions.x,dimensions.y);
-		this.camera.updateProjectionMatrix();
-	};
-
-CWS.Renderer.prototype.lookAtMill = function (dimensions)
-	{
-		var aspect = this.camera.aspect;
-		var fov = 20;
-		var distance = Math.max(dimensions.x,dimensions.y)/2/Math.tan( (fov/2)  * (Math.PI/180)  );
-		var cameraPosition = new THREE.Vector3(0,0,distance);
-		this.camera.position.copy( cameraPosition );
-		this.camera.far = 20*Math.max(dimensions.x,dimensions.y);
-		this.camera.near = 0.05*Math.max(dimensions.x,dimensions.y);
-		this.camera.updateProjectionMatrix();
-	};
-
-CWS.Renderer.prototype.lookAt3DPrinter = function (center,radius)
-	{
-		if (!center || !radius)
-			return;
-
-		var distance =(center.z+radius)/2/Math.tan( (20/2)  * (Math.PI/180)  );
-		var cameraPosition = new THREE.Vector3(0,0,distance);
-		this.camera.position.copy( cameraPosition );
-		this.camera.far = 2000;
-		this.camera.near = 1;
-		this.camera.updateProjectionMatrix();
-	};
-
-CWS.Renderer.prototype.setCamera = function (camera)
-	{
-		if (camera=="Perspective")
-			this.camera.toPerspective();
-		else if (camera=="Orthographic")
-			this.camera.toOrthographic();
-	};
-
-CWS.Renderer.prototype.setSize = function (width,height) 
-	{
-		this.width = width;
-		this.height = height;
-		this.camera.aspect = this.width / this.height;
-		this.camera.updateProjectionMatrix();
-		this.renderer.setSize( this.width, this.height );
-	};
-
-CWS.Renderer.prototype.removeMesh = function (meshName)
-	{
-		if (meshName!==undefined)
-		{
-			var mesh = this.scene.getObjectByName(meshName);
-			if (mesh)
-				this.scene.remove(mesh);
+			html += '<li><span class="icon icon-file-text2"></span>'+fileList[i]+'</li>';
 		}
+		html += "</ul>";
+        var dialog = this.dialog;
+		html = $(html).click(function (event) 
+			{
+                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
+                    return;
+                var projectName="";
+                if (event.target.tagName.toLocaleLowerCase()=="li")
+                {
+                    projectName = event.target.textContent;
+                }
+                else
+                {
+                    projectName = event.target.parentElement.textContent;
+                }
+                controller.openProject(projectName);
+                dialog.dialog("close");
+			});
+		this.dialog.append(html);
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
 	};
 
-CWS.Renderer.prototype.render = function (controls)
+/**CWS.DialogBox.prototype.openMachine = function (controller)
 	{
-		if (this['2DWorkpiece'] && this['2DWorkpiece'].animation)
-		{
-			this['2DWorkpiece'].animation.next()
-		}
-		// retirei essa parte e modifiquei 
-		/*if (this['3DWorkpiece'] && this['3DWorkpiece'].animation)
-		{
-			this['3DWorkpiece'].animation.next();
-		}*/
+		html = '<ul class="tableList">'+
+		'  <li><span class="icon icon-lathe"></span>Lathe</li>'+
+		'  <li><span class="icon icon-mill"></span>Mill</li>'+
+		'  <li><span class="icon icon-printer"></span>3D Printer</li>'+
+		'</ul>';
+        var dialog = this.dialog;
+		html = $(html).click(function (event) 
+			{
+                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
+                    return;
+                var machineName="";
+                if (event.target.tagName.toLocaleLowerCase()=="li")
+                {
+                    machineName = event.target.textContent;
+                }
+                else
+                {
+                    machineName = event.target.parentElement.textContent;
+                }
+                controller.openMachine(machineName);
+                dialog.dialog("close");
+			});
+		this.dialog.append(html);
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
+	}; **/
 
-		// aqui ele remove o objeto 3d da cena
-		const obj3D = this.scene.getObjectByName("3DWorkpiece");
-        if (obj3D) this.scene.remove(obj3D);
+/* =========================
+   Exercício 1 (OpenMachine)
+   ========================= */
+CWS.DialogBox.prototype.openMachine = function(controller) {
+    // HTML inicial: imagem do enunciado
+    var html = `
+        <div style="text-align:center;">
+            <img id="exercise1" src="images/exercise1.png.jpg" alt="Exercise 1" style="width:100%; max-width:355px; height:auto; margin-bottom:10px;">
+        </div>
+    `;
 
+    var dialog = this.dialog;
+    dialog.empty().append(html);
 
-		this.renderer.render( this.scene, this.camera );
-	};
+    // Pré-carrega as imagens para evitar atraso na primeira troca
+    (function preload(){
+        var a = new Image(); a.src = "images/answer1.png.jpg";
+        var b = new Image(); b.src = "images/exercise1.png.jpg";
+    })();
 
-CWS.Renderer.prototype.animate = function (b,meshName)
+    // Ao clicar em "Code": mostra a RESPOSTA e muda o botão para "Return"
+    function showResultado() {
+        $("#exercise1").attr("src", "images/answer1.png.jpg");
+        dialog.dialog("option", "buttons", {
+            "Return": showVoltar,
+            "Close": function() { $(this).dialog("close"); }
+        });
+    }
+
+    // Ao clicar em "Return": volta ao enunciado e muda o botão para "Code"
+    function showVoltar() {
+        $("#exercise1").attr("src", "images/exercise1.png.jpg");
+        dialog.dialog("option", "buttons", {
+            "Code": showResultado,
+            "Close": function() { $(this).dialog("close"); }
+        });
+    }
+
+    // Abre o diálogo com título e botões iniciais
+    dialog.dialog({
+        title: "Exercise 1",
+        width: 400,
+        buttons: {
+            "Code": showResultado,
+            "Close": function() { $(this).dialog("close"); }
+        }
+    });
+};
+
+/* =========================
+   Dimensões da peça
+   ========================= */
+CWS.DialogBox.prototype.workpieceDimensions = function (controller)
 	{
-		if (this[meshName] && this[meshName].animation)
-			this[meshName].animation.touggleAnimation();
+        var machineType = controller.getMachineType();
+        var workpiece = controller.getWorkpiece();
+        var html = "";
+        if (machineType=="Lathe")
+        {
+            html = '<form id="workpieceDimensions">'+
+            '<ul>'+
+            '  <li>'+
+            '    <label for= "x" >Diameter</label>'+
+            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
+            '  </li>'+
+            '   <li>'+
+            '    <label for= "z" >Lenght</label>'+
+            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
+            '  </li>'+
+            '</ul></form>';
+        }
+        else if (machineType=="Mill")
+        {
+            html = '<form id="workpieceDimensions">'+
+            '<ul>'+
+            '  <li>'+
+            '    <label for= "x" >Size X</label>'+
+            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
+            '  </li>'+
+            '  <li>'+
+            '    <label for= "y" >Size Y</label>'+
+            '    <input type= "text" name= "y" value="'+workpiece.y+'"/>'+
+            '  </li>'+
+            '   <li>'+
+            '    <label for= "z" >Size Z</label>'+
+            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
+            '  </li>'+
+            '</ul></form>';
+        }
+        else if (machineType=="3D Printer")
+        {
+            html = '<form id="workpieceDimensions">'+
+            '<ul>'+
+            '  <li>'+
+            '    <label for= "filamentDiameter" >Filament Diameter</label>'+
+            '    <input type= "text" name="filamentDiameter" value="'+workpiece.filamentDiameter+'"/>'+
+            '  </li>'+
+            '  <li>'+
+            '    <label for= "layerHeight" >Layer Height</label>'+
+            '    <input type= "text" name= "layerHeight" value="'+workpiece.layerHeight+'"/>'+
+            '  </li>'+
+            '</ul></form>';
+        }
+		this.dialog.append($(html));
+		this.dialog.dialog(
+	      {
+	      width: 400,
+	      buttons: 
+	        { 
+	            "Save": function()
+	            {
+	            	var values = {};
+	            	var result = $(this.firstChild).serializeArray();
+	            	for (var i = 0; i < result.length; i++) 
+	            	{
+	            		values[result[i].name]=parseFloat(result[i].value);
+	            	}
+	              	controller.setWorkpieceDimensions(values);
+	              	$(this).dialog("close");
+	            },
+	          	"Cancel": function()
+	            {
+          			$(this).dialog("close");
+	            }
+	        }
+	      });
 	};
 
-CWS.Renderer.prototype.addMesh = function (meshName,mesh)
+/***CWS.DialogBox.prototype.tool = function (controller)
 	{
-		var meshTemp = this.scene.getObjectByName(meshName);
-		if (meshTemp)
+		var machineType = controller.getMachineType();
+		if (machineType==="Lathe")
 		{
-			this.scene.remove(meshTemp);
-			this[meshName] = undefined;
+			var machine = controller.getMachine();
+			var html = 	'<form id="menuTool">'+
+						'<ul>'+
+						'  <li>'+
+						'    <label for= "toolradius" >Tool radius</label>'+
+						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
+						'  </li>'+
+						'</ul>'+
+						'</form>';
+			this.dialog.append($(html));
+			this.dialog.dialog(
+		      {
+		      width: 400,
+		      buttons: 
+		        {
+		            "Save": function()
+		            {
+		            	var values = {};
+		            	var result = $(this.firstChild).serializeArray();
+		            	for (var i = 0; i < result.length; i++) 
+		            	{
+		            		values[result[i].name]=parseFloat(result[i].value);
+		            	}
+		              	controller.setMachineTool(values);
+		              	$(this).dialog("close");
+		            },
+		          	"Cancel": function()
+		            {
+	          			$(this).dialog("close");
+		            }
+		        }
+		      });
 		}
-		if (mesh.geometry !== undefined)
+		else if (machineType==="Mill")
 		{
-			mesh.name = meshName;
-			if (mesh instanceof THREE.BufferGeometry)
-				mesh.geometry.setDrawRange(0,Infinity);
-
-			// adicionei isso pra começar com o wireframe sem aparecer
-		/*if (mesh.material && mesh.material.wireframe) {
-        mesh.material.wireframe = false;
-        }*/
-
-			this[meshName] = mesh;
-			this.scene.add(mesh);
+			var machine = controller.getMachine();
+			var html = 	'<form id="menuTool">'+
+						'<ul>'+
+						'  <li>'+
+						'    <label for= "toolradius" >Tool radius</label>'+
+						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
+						'  </li>'+
+						'  <li>'+
+						'    <label for= "toolangle" >Tool angle</label>'+
+						'    <input type= "text" name= "toolangle" value="'+machine.tool.angle+'"/>'+
+						'  </li>'+
+						'</ul>'+
+						'</form>';
+			this.dialog.append($(html));
+			this.dialog.dialog(
+		      {
+		      width: 400,
+		      buttons: 
+		        {
+		            "Save": function()
+		            {
+		            	var values = {};
+		            	var result = $(this.firstChild).serializeArray();
+		            	for (var i = 0; i < result.length; i++) 
+		            	{
+		            		values[result[i].name]=parseFloat(result[i].value);
+		            	}
+		              	controller.setMachineTool(values);
+		              	$(this).dialog("close");
+		            },
+		          	"Cancel": function()
+		            {
+	          			$(this).dialog("close");
+		            }
+		        }
+		      });
 		}
-	};
+		else
+		{
+			var html = 	'<ul><li>'+machineType+' does not support tool settings</li></ul>';
+			this.dialog.append($(html));
+			this.dialog.dialog(
+		      {
+		      width: 400,
+		      buttons: 
+		        {
+		            "Ok": function()
+		            {
+		              	$(this).dialog("close");
+		            },
+		          	"Cancel": function()
+		            {
+	          			$(this).dialog("close");
+		            }
+		        }
+		      });
+		}
+	}; ***/
+
+/* =========================
+   Exercício 3 (Tool)
+   ========================= */
+CWS.DialogBox.prototype.tool = function(controller) {
+    var html = `
+        <div style="text-align:center;">
+            <img id="exercise3" src="images/exercise3.png.jpg" alt="Tool" style="width:100%; max-width:355px; height:auto; margin-bottom:10px;">
+        </div>
+    `;
+
+    var dialog = this.dialog;
+    dialog.empty().append(html);
+
+    // Pré-carrega as imagens para evitar atraso
+    (function preload(){
+        var a = new Image(); a.src = "images/answer3.png.jpg";
+        var b = new Image(); b.src = "images/exercise3.png.jpg";
+    })();
+
+    function showResultado() {
+        $("#exercise3").attr("src", "images/answer3.png.jpg");
+        dialog.dialog("option", "buttons", {
+            "Return": showVoltar,
+            "Close": function() { $(this).dialog("close"); }
+        });
+    }
+
+    function showVoltar() {
+        $("#exercise3").attr("src", "images/exercise3.png.jpg");
+        dialog.dialog("option", "buttons", {
+            "Code": showResultado,
+            "Close": function() { $(this).dialog("close"); }
+        });
+    }
+
+    dialog.dialog({
+        title: "Exercise 3",
+        width: 400,
+        buttons: {
+            "Code": showResultado,
+            "Close": function() { $(this).dialog("close"); }
+        }
+    });
+};
+
+/* =========================
+   Exercício 2 (Machine Settings)
+   ========================= */
+CWS.DialogBox.prototype.machineSettings = function(controller) {
+    var html = `
+        <div style="text-align:center;">
+            <img id="exercise2" src="images/exercise2.png.jpg" alt="Machine Settings" style="width:100%; max-width:350px; height:auto; margin-bottom:10px;">
+        </div>
+    `;
+
+    var dialog = this.dialog;
+    dialog.empty().append(html);
+
+    // Pré-carrega para evitar atraso
+    (function preload(){
+        var a = new Image(); a.src = "images/answer2.png.jpg";
+        var b = new Image(); b.src = "images/exercise2.png.jpg";
+    })();
+
+    function showResultado() {
+        $("#exercise2").attr("src", "images/answer2.png.jpg");
+        dialog.dialog("option", "buttons", {
+            "Return": showVoltar,
+            "Close": function() { $(this).dialog("close"); }
+        });
+    }
+
+    function showVoltar() {
+        $("#exercise2").attr("src", "images/exercise2.png.jpg");
+        dialog.dialog("option", "buttons", {
+            "Code": showResultado,
+            "Close": function() { $(this).dialog("close"); }
+        });
+    }
+
+    dialog.dialog({
+        title: "Exercise 2",
+        width: 400,
+        buttons: {
+            "Code": showResultado,
+            "Close": function() { $(this).dialog("close"); }
+        }
+    });
+};
