@@ -379,9 +379,6 @@
     justify-content: center;
 }
 
-
-/* Botão X */
-/* (ajustado dentro da janela) */
 #closeTutorial {
     position: absolute;
     top: 8px;              /* move para dentro da caixa - estava 10 px antes */
@@ -414,6 +411,255 @@
 /* ======== FIM ADIÇÕES ======== */
 
 .dg .close-button { display: none !important; } /*Ocultar Open Control*/
+
+/* =========================================================
+   📱 MOBILE UX FIXES — SEM ALTERAR LÓGICA
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+  /* ===== JANELAS (Exercises / About) ===== */
+  #exerciseWindow,
+  #aboutWindow {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+
+  #exerciseContent,
+  #aboutContent {
+    height: calc(100vh - 46px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* ===== EXERCISES LAYOUT ===== */
+  #exerciseContent {
+    flex-direction: column !important;
+  }
+
+  #exerciseList {
+    width: 100% !important;
+    max-height: 160px;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 6px;
+  }
+
+  #exerciseList .exerciseBtn {
+    white-space: nowrap;
+    min-width: max-content;
+  }
+
+  #exerciseViewer {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  #imageWrap {
+    min-height: 220px;
+  }
+
+  /* ===== TEST CONTAINER ===== */
+  #testContainer textarea {
+    height: 160px !important;
+  }
+
+  /* ===== TUTORIAL ===== */
+  #tutorialContent {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    padding-top: 48px;
+  }
+
+  #tutorialVideo {
+    width: 100%;
+    height: auto;
+    max-height: 70vh;
+  }
+
+  #closeTutorial {
+    top: 8px;
+    right: 12px;
+    font-size: 22px;
+  }
+  
+  .ui-resizable-handle,
+  .ui-draggable-handle {
+    display: none !important;
+  }
+
+  #editor,
+  #canvasContainer {
+    touch-action: pan-y;
+  }
+
+}
+
+@media (max-width: 768px) {
+
+  #exerciseWindow,
+  #aboutWindow {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #exerciseWindow .cwsx-header,
+  #aboutWindow .cwsx-header {
+    position: sticky;
+    top: 0;
+    z-index: 99999;
+  }
+
+  #closeExercise,
+  #closeAbout,
+  #closeTutorial {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 36px;
+    font-size: 18px;
+    z-index: 100000;
+  }
+
+  #exerciseContent {
+    flex-direction: column !important;
+    height: calc(100vh - 46px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #exerciseList {
+    width: 100% !important;
+    max-height: 150px;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    white-space: nowrap;
+  }
+
+  #exerciseViewer {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .viewer-buttons {
+    position: sticky;
+    bottom: 0;
+    background: #1e1b1b;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 9999;
+  }
+
+  /* ===============================
+     TEST CONTAINER SCROLL OK
+     =============================== */
+  #testContainer {
+    overflow-y: auto;
+  }
+
+  /* ===============================
+     TUTORIAL — VIDEO GRANDE
+     =============================== */
+  #tutorialContent {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    padding-top: 52px;
+  }
+
+  #tutorialVideo {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 75vh !important;
+  }
+
+  /* ===============================
+     LANDSCAPE — GARANTE VISUALIZAÇÃO
+     =============================== */
+  @media (orientation: landscape) {
+    #exerciseWindow,
+    #aboutWindow,
+    #tutorialContent {
+      height: 100vh !important;
+    }
+
+    #exerciseList {
+      max-height: 120px;
+    }
+
+    #tutorialVideo {
+      max-height: 85vh !important;
+    }
+  }
+
+  .ui-resizable-handle,
+  .ui-draggable-handle {
+    display: none !important;
+  }
+}
+/* =====================================================
+   🔥 FIX DEFINITIVO — HAMBURGUER SÓ NO MOBILE
+   ===================================================== */
+
+/* Desktop: nunca mostrar */
+#exerciseHamburger {
+  display: none !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+
+  /* Header precisa alinhar */
+  #exerciseWindow .cwsx-header {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* MOSTRAR hamburguer */
+  #exerciseHamburger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #fff;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+
+  /* Lista começa fechada */
+  #exerciseList {
+    display: none !important;
+    width: 100% !important;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  /* Quando abrir */
+  #exerciseList.open {
+    display: flex !important;
+    flex-direction: column;
+  }
+}
 
 </style>
 
@@ -464,6 +710,7 @@
 
 <div id="exerciseWindow">
     <div class="cwsx-header">
+        <button id="exerciseHamburger" aria-label="Toggle exercises">☰</button>
         <div class="cwsx-title">Exercises</div>
         <button id="closeExercise">X</button>
     </div>
@@ -533,6 +780,7 @@ window.addEventListener("load", (function () {
         new CWS.Renderer("renderer1"),
         new CWS.Motion(),
         true
+        
     );
 
     ui = new CWS.UI(controller);
@@ -731,6 +979,15 @@ window.addEventListener("load", (function () {
     $("#exerciseWindow").on("click", "#closeViewer", function(){
         closeExerciseWindow();
     });
+
+const hamburger = document.getElementById("exerciseHamburger");
+const exerciseList = document.getElementById("exerciseList");
+
+if (hamburger && exerciseList) {
+    hamburger.addEventListener("click", function () {
+        exerciseList.classList.toggle("open");
+    });
+}
 
     function closeExerciseWindow(){
         $("#exerciseWindow").fadeOut();
@@ -1064,7 +1321,7 @@ document.addEventListener("DOMContentLoaded", function() {
   // adiciona no body
   document.body.insertAdjacentHTML("beforeend", aboutHTML);
 
-    // Habilita arrastar e redimensionar (jQuery UI precisa estar carregado)
+    // Habilita arrastar e redimensisonar (jQuery UI precisa estar carregado)
   $("#aboutWindow").draggable({ handle: ".cwsx-header" }).resizable({
     minWidth: 320,
     minHeight: 200,
