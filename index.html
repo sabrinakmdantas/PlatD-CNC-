@@ -598,28 +598,18 @@ window.addEventListener("load", (function () {
 
     // utility to get/set editor content (ACE compatibility)
     function getEditorContent(){
-    try{
-        let ed = null;
+        let mobileSafeCode = "";
 
-        if (controller?.editor?.editor) ed = controller.editor.editor;
-        else if (controller?.editor) ed = controller.editor;
-        else if (window.editor) ed = window.editor;
-
-        if (!ed) return "";
-
-        // 🔑 força sincronização no mobile
-        if (ed.session && ed.session.getValue) {
-            return ed.session.getValue();
-        }
-
-        return ed.getValue ? ed.getValue() : "";
-    } catch(e){
-        console.warn(e);
+        try{
+            if(controller && controller.editor && controller.editor.editor && typeof controller.editor.editor.getValue === "function") return controller.editor.editor.getValue();
+            if(controller && controller.editor && typeof controller.editor.getValue === "function") return controller.editor.getValue();
+            if(window.editor && typeof window.editor.getValue === "function") return window.editor.getValue();
+        }catch(e){ console.warn(e); }
         return "";
     }
-}
-
     function setEditorContent(txt){
+        let mobileSafeCode = "";
+
         try{
             if(controller && controller.editor && controller.editor.editor && typeof controller.editor.editor.setValue === "function") { controller.editor.editor.setValue(txt, -1); return true; }
             if(controller && controller.editor && typeof controller.editor.setValue === "function") { controller.editor.setValue(txt, -1); return true; }
@@ -630,11 +620,9 @@ window.addEventListener("load", (function () {
 
     // Save with File System Access API if available, else fallback to download
     async function saveToFile(defaultName){
-    // ⏳ espera 1 frame (resolve mobile)
-    await new Promise(r => requestAnimationFrame(r));
+        let mobileSafeCode = "";
 
-    const code = getEditorContent();
-
+        const code = mobileSafeCode || "";
         if(window.showSaveFilePicker){
             try{
                 const handle = await window.showSaveFilePicker({
@@ -673,6 +661,8 @@ window.addEventListener("load", (function () {
 
     // Open with File System Access API if available, else fallback to input
     async function openFromFile(){
+        let mobileSafeCode = "";
+
         if(window.showOpenFilePicker){
             try{
                 const [handle] = await window.showOpenFilePicker({
@@ -741,14 +731,11 @@ window.addEventListener("load", (function () {
 
     modalSaveBtn.addEventListener("click", async function(){
     modal.style.display = "none";
-
     const ok = await saveToFile("");
 
-    // ⏳ pequeno delay antes de limpar (mobile safe)
-    setTimeout(() => {
-        setEditorContent("");
-        showStatus("Editor limpo.");
-    }, 50);
+    setEditorContent("");
+    mobileSafeCode = "";   // 🔑 ESSENCIAL
+    showStatus("Editor limpo.");
 });
 
 
@@ -898,17 +885,25 @@ const gabaritos = {
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   setTimeout(() => {
-    // Tenta localizar o editor (mantendo compatibilidade)
-    let aceEditor = null;
-    if (window.controller?.editor?.editor) aceEditor = window.controller.editor.editor;
-    else if (window.controller?.editor) aceEditor = window.controller.editor;
-    else if (window.editor) aceEditor = window.editor;
-    else if (window.ace?.edit) aceEditor = ace.edit(document.querySelector(".ace_editor"));
+    const ed =
+        controller?.editor?.editor ||
+        controller?.editor ||
+        window.editor;
 
-    if (!aceEditor) {
-      console.warn("❌ Nenhum editor ACE encontrado. Verificação não ativada.");
-      return;
+    if (!ed) return;
+
+    // sincroniza sempre que o código muda
+    if (ed.session?.on) {
+        ed.session.on("change", () => {
+            mobileSafeCode = ed.getValue();
+        });
+    } else if (ed.on) {
+        ed.on("change", () => {
+            mobileSafeCode = ed.getValue();
+        });
     }
+}, 1500);
+
 
     // Cria o painel de feedback dentro do canvasContainer (em baixo do desenho)
     const canvasContainer = document.getElementById("canvasContainer");
