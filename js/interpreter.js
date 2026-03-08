@@ -726,6 +726,6 @@ CWS.ErrorParser = function (line,message,data)
 // Returns a string form of the error.
 CWS.ErrorParser.prototype.toString = function ()
   {
-    return "Error on line: "+this.line
-    throw "Error on line "+this.line+": "+this.message+"\n"+this.data;
+  //  return "Error on line: "+this.line
+    //throw "Error on line "+this.line+": "+this.message+"\n"+this.data;
   };
