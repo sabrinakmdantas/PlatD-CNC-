@@ -1,1078 +1,1149 @@
-/**
- * @author Filipe Caixeta / http://filipecaixeta.com.br/
- */
-/** 
+<html>
+<head>
+	<meta charset="utf-8">
+   <meta name="viewport" content="minimal-ui, width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="google" content="nositelinkssearchbox" />
+    <meta name="description" content="CNC Web Simulator, an open source CNC simulator for web browser. It can simulate lathe, mill and 3D printers." />
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" type="text/css" href="css/jquery-ui.structure.css">
+    <link rel="stylesheet" type="text/css" href="css/fontIcon.css"4>
+    <link rel="stylesheet" type="text/css" href="css/ui.css">
+    <title>PlatD-CNC</title>
+    <script src="js/libs/lz-string.min.js"></script>
+    <script src="js/libs/ace/ace.js"></script>
+    <script src="js/libs/jquery-1.12.0.min.js"></script>
+    <script src="js/libs/jquery-ui.min.js"></script> 
+    <script src="js/libs/three.js"></script>
+    <script src="js/libs/dat.gui.js"></script>
+	<script src="js/libs/stats.min.js"></script>
+	<script src="js/libs/OrbitControls.js"></script>
+	<script src="js/libs/TrackballControls.js"></script>
+    <script src="js/libs/OBJExporter.js"></script>
+    <script src="js/libs/STLBinaryExporter.js"></script>
+    
+    <script src="js/cws.js"></script>
+	<script src="js/storage.js"></script>
+	<script src="js/project.js"></script>
+	<script src="js/editor.js"></script>
+	<script src="js/renderer.js"></script>
+	<script src="js/shaders.js"></script>
+	<script src="js/machine.js"></script>
+	<script src="js/lathe.js"></script>
+    <script src="js/mill.js"></script>
+    <script src="js/printer.js"></script>
+    <script src="js/motion.js"></script>
+	<script src="js/controller.js"></script>
+	<script src="js/ui.js"></script>
 
-CWS.UI = function (controller) 
-	{
-		this.controller = controller;
-		var topMenu = $("#topMenu");
-		$("#topMenu>nav > ul > li").each(function(i){$(this)
-			.mouseenter(function(){topMenu.css('height','90px');})
-			.mouseleave(function(){topMenu.css('height','45px');})
-		});
-		topMenu.click(
-			function  (ev) 
-			{
-				var title = ev.target.title
-				switch (title)
-				{
-					case "New Project":
-						var d = new CWS.DialogBox(title);
-						d.newProject(controller);
-						break;
-					case "Open Project":
-						var d = new CWS.DialogBox(title);
-						d.openProject(controller);
-						break;
-					case "Open Machine":
-						var d = new CWS.DialogBox(title);
-						d.openMachine(controller);
-						break;
-					case "Workpiece dimensions":
-						var d = new CWS.DialogBox(title);
-						d.workpieceDimensions(controller);
-						break;
-                    case "Export File":
-                        controller.exportToOBJ();
-                        break;
-                    case "Tool":
-                        var d = new CWS.DialogBox(title);
-						d.tool(controller);
-                        break;
-					default:
-						break;
-				}
-			});
+<style>
+#exerciseWindow {
+    display: none;
+    position: absolute;
+    width: 650px;
+    height: 460px;
+    background: #1e1b1b;
+    color: #eee;
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px #132511;
+    padding: 8px;
+    z-index: 9999;
+    overflow: hidden;
+    font-family: inherit;
+}
+#exerciseWindow .cwsx-header {
+    height: 36px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background: linear-gradient(#132511,#375020ff);
+    border-bottom: 1px solid #2b2b2b;
+    font-weight:600;
+}
+#closeExercise {
+    cursor: pointer;
+    background: #4b0d0d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-weight:700;
+}
+#exerciseContent {
+    display:flex;
+    gap:12px;
+    height: calc(100% - 46px);
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+#exerciseList {
+    width: 28%;
+    background: #132511;
+    border-radius: 8px;
+    padding: 10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow:auto;
+    box-sizing: border-box;
+}
+#exerciseList .exerciseBtn {
+    background: transparent;
+    color: #fff;
+    border: none;
+    text-align:left;
+    padding: 8px 6px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight:600;
+}
+#exerciseList .exerciseBtn:hover {
+    background: #456328ff;
+}
+#exerciseViewer {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:flex-start;
+    align-items:center;
+    padding:6px;
+    box-sizing:border-box;
+    background: linear-gradient(rgba(88, 60, 60, 0.08),);
+    border-radius:8px;
+    width:100%;
+    height:100%;
+}
+#exerciseTitle {
+    margin: 6px 0 10px 0;
+    color: #f5f5f5;
+}
+#imageWrap {
+    flex:1;
+    width: 100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px;
+    box-sizing:border-box;
+}
+#exerciseImage, #answerImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border: 1px solid #f5f5f5;
+    border-radius:6px;
+    display:none;
+    background: #132511;
+}
+.viewer-buttons {
+    width:100%;
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    padding:8px 0 0 0;
+}
+.viewer-buttons button {
+    padding:8px 14px;
+    border-radius:6px;
+    border: none;
+    cursor:pointer;
+    font-weight:700;
+}
+.btn-coder { background:#377b2f; color:#fff; }
+.btn-close { background:#4b190d; color:#fff; }
 
-		this.elementEditor = $(document.getElementById("editor"));
-		this.elementTopMenu = $(document.getElementById("topMenu"));
-		this.elementCanvasContainer = $(document.getElementById("canvasContainer"));
-		this.elementBottomMenu = $(document.getElementById("bottomMenu"));
-		this.elementBody = $(document.body);
-		this.resize();
-		$("#saveIcon").css('color', 'green').click(function (ev) 
-		{
-			controller.save(true);
-		});
-		$("#autoRunIcon").css('color', 'green').click(function () 
-		{
-			controller.autoRun=!controller.autoRun;
-			if (controller.autoRun===false)
-				$(this).css('color','red');
-			else
-			{
-				$(this).css('color','green');
-				controller.runInterpreter(true);
-			}
-		});
-		$("#runIcon").click(function (ev) 
-		{
-			controller.runInterpreter(true);
-		});
-		$("#run2DIcon").css('color', 'green').click(function (ev) 
-		{
-			controller.run2D=!controller.run2D;
-			if (controller.run2D===false)
-				$(this).css('color','red');
-			else
-			{
-				$(this).css('color','green');
-			}
-			controller.update2D();
-		});
-		/*$("#run3DIcon").css('color', 'green').click(function (ev) 
-		{
-			controller.run3D=!controller.run3D;
-			if (controller.run3D===false)
-				$(this).css('color','red');
-			else
-			{
-				$(this).css('color','green');
-			}
-			controller.update3D();
-		});*/
-		/*var color = "green";
-		if (controller.renderer.displayWireframe===false)
-			color="red";
-		$("#wireframeIcon").css('color', color).click(function (ev) 
-		{
-			controller.runWireframe=!controller.runWireframe;
-			if (controller.runWireframe===false)
-			{
-				$(this).css('color','red');
-			}
-			else
-			{
-				$(this).css('color','green');
-			}
-		});*/
-/** 
-		$("#runAnimationIcon").click(function (ev) 
-		{
-			controller.runAnimation();
-		});
-	}
-*/
-/** 
-CWS.UI.prototype.constructor = CWS.UI;
+/* Test container */
+#testContainer {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    background: #0e1b0c;
+    border-radius: 8px;
+    color: #fff;
+}
+#testContainer select, #testContainer textarea {
+    width: 100%;
+    border-radius: 6px;
+    border: 1px solid #1f411b;
+    background: #0e1b0c;
+    color: #fff;
+    padding: 6px;
+    font-family: monospace;
+    font-size: 13px;
+}
+#testContainer textarea {
+    flex: 1;
+    resize: none;
+    height: 250px;
+    font-family: monospace;
+}
+#testButtons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+#checkButton, #backButton {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+#checkButton { background: #377b2f; color: #fff;}
+#backButton { background: #2b2b2b; color: #fff;}
+#testFeedback {
+    margin-top: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    white-space: pre-line;
 
-CWS.UI.prototype.resize = function()
-	{
-		var width = this.elementBody.innerWidth();
-		var height = this.elementBody.innerHeight();
-		
-		var editorWidth;
-		if (this.elementEditor.css('display')==='none')
-			editorWidth = 0;
-		else
-			editorWidth = this.elementEditor.innerWidth();
+    /* --- ADIÇÕES PARA A CAIXA VERDE --- */
+    background: #0e1b0c;    /* fundo verde */
+    padding: 10px;
+    border-radius: 8px;
+    overflow-y: auto;        /* permite rolar dentro da caixa */
+}
 
-		this.elementTopMenu.innerWidth(width-editorWidth);
-		this.elementCanvasContainer.innerWidth(width-editorWidth);
-		this.controller.renderer.setSize(width-editorWidth,height);
-		this.elementBottomMenu.innerWidth(width-editorWidth);
-	};
+.line-error { color: rgb(255, 36, 36); }
+.line-correct { color: #00ff00; }
 
-CWS.UI.prototype.createStats = function (v) 
-	{
-		if (v===false)
-			return {update:function(){}};
-		var maincanvasdiv = document.getElementById("canvasContainer");
-		var width = maincanvasdiv.offsetWidth;
-		var height = maincanvasdiv.offsetHeight;
+/* ======== ADIÇÕES: menu File + status message + modal ======== */
+/* ======== File Menu (estilo aprimorado) ======== */
+#fileMenu {
+  display: none;
+  position: absolute;
+  top: 36px;
+  left: 10px;
+  width: 160px;
+  background: #1e1b1b;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px #132511;
+  z-index: 9999;
+  overflow: hidden;
+  font-family: inherit;
+  animation: dropdownFade 0.2s ease;
+}
 
-		stats = new Stats();
-		stats.domElement.style.position = 'absolute';
-		stats.domElement.style.bottom = '0px';
-		stats.domElement.style.right = '0px';
-		maincanvasdiv.appendChild( stats.domElement );
-		return stats;
-	};
+#fileMenu::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 20px;
+  border-width: 0 8px 8px 8px;
+  border-style: solid;
+  border-color: transparent transparent #1e1b1b transparent;
+}
 
-CWS.DialogBox = function (title)
-	{
-		$("#dialogBox").remove();
-		
-		this.dialog = $( '<div id="dialogBox" title="'+title+'" ></div>');
-	}
+#fileMenu button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  color: #eee;
+  border: none;
+  text-align: left;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
 
-CWS.DialogBox.prototype.constructor = CWS.DialogBox;
+#fileMenu button:hover {
+  background: linear-gradient(#132511, #375020ff);
+  transform: translateX(2px);
+}
 
-CWS.DialogBox.prototype.newProject = function (controller)
-	{
-		var html = '<form id="menuNewProject">'+
-			'<ul>'+
-			'  <li>'+
-			'    <label for= "projectName" >Project Name</label>'+
-			'    <input type= "text" name= "projectName" />'+
-			'  </li>'+
-			'  <li>'+
-			'    <label for= "machineType" >Machine</label>'+
-			'    <input type="radio" name="machineType" value="Lathe" checked> Lathe'+
-			'    <input type="radio" name="machineType" value="Mill"> Mill'+
-			'    <input type="radio" name="machineType" value="3D Printer"> 3D Printer'+
-			'  </li>'+
-			'</ul>'+
-			'</form>';
-		this.dialog.append($(html));
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	            "Create": function()
-	            {
-	            	var values = {};
-	            	var result = $(this.firstChild).serializeArray();
-	            	for (var i = 0; i < result.length; i++) 
-	            	{
-	            		values[result[i].name]=result[i].value;
-	            	}
-	              	controller.createProject(values);
-	              	$(this).dialog("close");
-	            },
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+#fileMenu button:active {
+  transform: translateY(1px);
+  background: #264422;
+}
 
-CWS.DialogBox.prototype.openProject = function (controller)
-	{
-		html = '<ul class="tableList">';
-		var fileList = Object.keys(controller.listProjects());
-		for (var i = 0; i < fileList.length; i++) 
-		{
-			html += '<li><span class="icon icon-file-text2"></span>'+fileList[i]+'</li>';
-		}
-		html += "</ul>";
-        var dialog = this.dialog;
-		html = $(html).click(function (event) 
-			{
-                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
-                    return;
-                var projectName="";
-                if (event.target.tagName.toLocaleLowerCase()=="li")
-                {
-                    projectName = event.target.textContent;
-                }
-                else
-                {
-                    projectName = event.target.parentElement.textContent;
-                }
-                controller.openProject(projectName);
-                dialog.dialog("close");
-			});
-		this.dialog.append(html);
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-CWS.DialogBox.prototype.openMachine = function (controller)
-	{
-		html = '<ul class="tableList">'+
-		'  <li><span class="icon icon-lathe"></span>Lathe</li>'+
-		'  <li><span class="icon icon-mill"></span>Mill</li>'+
-		'  <li><span class="icon icon-printer"></span>3D Printer</li>'+
-		'</ul>';
-        var dialog = this.dialog;
-		html = $(html).click(function (event) 
-			{
-                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
-                    return;
-                var machineName="";
-                if (event.target.tagName.toLocaleLowerCase()=="li")
-                {
-                    machineName = event.target.textContent;
-                }
-                else
-                {
-                    machineName = event.target.parentElement.textContent;
-                }
-                controller.openMachine(machineName);
-                dialog.dialog("close");
-			});
-		this.dialog.append(html);
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+/* Modal confirm */
+#saveConfirmModal {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background: #272822;
+  color: #fff;
+  border: 1px solid #005c00;
+  border-radius: 8px;
+  padding: 14px 18px;
+  z-index: 10000;
+  text-align: center;
+  min-width: 280px;
+}
+#saveConfirmModal p { margin-bottom: 12px; font-weight:600; }
+#saveConfirmModal .modalButtons { display:flex; gap:10px; justify-content:center; }
+#saveConfirmModal button { padding:8px 12px; border-radius:6px; border:none; font-weight:700; cursor:pointer; }
+#saveConfirmModal .saveBtn { background:#005c00; color:#fff; }
+#saveConfirmModal .dontSaveBtn { background:#555; color:#fff; }
 
-CWS.DialogBox.prototype.workpieceDimensions = function (controller)
-	{
-        var machineType = controller.getMachineType();
-        var workpiece = controller.getWorkpiece();
-        var html = "";
-        if (machineType=="Lathe")
-        {
-            html = '<form id="workpieceDimensions">'+
-            '<ul>'+
-            '  <li>'+
-            '    <label for= "x" >Diameter</label>'+
-            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
-            '  </li>'+
-            '   <li>'+
-            '    <label for= "z" >Lenght</label>'+
-            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
-            '  </li>'+
-            '</ul></form>';
-        }
-        else if (machineType=="Mill")
-        {
-            html = '<form id="workpieceDimensions">'+
-            '<ul>'+
-            '  <li>'+
-            '    <label for= "x" >Size X</label>'+
-            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
-            '  </li>'+
-            '  <li>'+
-            '    <label for= "y" >Size Y</label>'+
-            '    <input type= "text" name= "y" value="'+workpiece.y+'"/>'+
-            '  </li>'+
-            '   <li>'+
-            '    <label for= "z" >Size Z</label>'+
-            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
-            '  </li>'+
-            '</ul></form>';
-        }
-        else if (machineType=="3D Printer")
-        {
-            html = '<form id="workpieceDimensions">'+
-            '<ul>'+
-            '  <li>'+
-            '    <label for= "filamentDiameter" >Filament Diameter</label>'+
-            '    <input type= "text" name="filamentDiameter" value="'+workpiece.filamentDiameter+'"/>'+
-            '  </li>'+
-            '  <li>'+
-            '    <label for= "layerHeight" >Layer Height</label>'+
-            '    <input type= "text" name= "layerHeight" value="'+workpiece.layerHeight+'"/>'+
-            '  </li>'+
-            '</ul></form>';
-        }
-		this.dialog.append($(html));
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	            "Save": function()
-	            {
-	            	var values = {};
-	            	var result = $(this.firstChild).serializeArray();
-	            	for (var i = 0; i < result.length; i++) 
-	            	{
-	            		values[result[i].name]=parseFloat(result[i].value);
-	            	}
-	              	controller.setWorkpieceDimensions(values);
-	              	$(this).dialog("close");
-	            },
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+/* ======== About Window ======== */
+#aboutWindow {
+  display: none;
+  position: absolute;
+  width: 650px;
+  height: 460px;
+  background: #1e1b1b;
+  color: #eee;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px #132511;
+  padding: 8px;
+  z-index: 9999;
+  overflow: hidden;
+  font-family: inherit;
+}
+#aboutWindow .cwsx-header {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(#132511, #375020ff);
+  border-bottom: 1px solid #2b2b2b;
+  font-weight: 600;
+  padding: 0 10px;
+}
+#closeAbout {
+  cursor: pointer;
+  background: #4b0d0d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-weight: 700;
+}
+#aboutContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: calc(100% - 46px);
+  padding: 10px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+#aboutContent ul {
+  margin-left: 18px;
+}
 
-CWS.DialogBox.prototype.tool = function (controller)
-	{
-		var machineType = controller.getMachineType();
-		if (machineType==="Lathe")
-		{
-			var machine = controller.getMachine();
-			var html = 	'<form id="menuTool">'+
-						'<ul>'+
-						'  <li>'+
-						'    <label for= "toolradius" >Tool radius</label>'+
-						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
-						'  </li>'+
-						'</ul>'+
-						'</form>';
-			this.dialog.append($(html));
-			this.dialog.dialog(
-		      {
-		      width: 400,
-		      buttons: 
-		        {
-		            "Save": function()
-		            {
-		            	var values = {};
-		            	var result = $(this.firstChild).serializeArray();
-		            	for (var i = 0; i < result.length; i++) 
-		            	{
-		            		values[result[i].name]=parseFloat(result[i].value);
-		            	}
-		              	controller.setMachineTool(values);
-		              	$(this).dialog("close");
-		            },
-		          	"Cancel": function()
-		            {
-	          			$(this).dialog("close");
-		            }
-		        }
-		      });
-		}
-		else if (machineType==="Mill")
-		{
-			var machine = controller.getMachine();
-			var html = 	'<form id="menuTool">'+
-						'<ul>'+
-						'  <li>'+
-						'    <label for= "toolradius" >Tool radius</label>'+
-						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
-						'  </li>'+
-						'  <li>'+
-						'    <label for= "toolangle" >Tool angle</label>'+
-						'    <input type= "text" name= "toolangle" value="'+machine.tool.angle+'"/>'+
-						'  </li>'+
-						'</ul>'+
-						'</form>';
-			this.dialog.append($(html));
-			this.dialog.dialog(
-		      {
-		      width: 400,
-		      buttons: 
-		        {
-		            "Save": function()
-		            {
-		            	var values = {};
-		            	var result = $(this.firstChild).serializeArray();
-		            	for (var i = 0; i < result.length; i++) 
-		            	{
-		            		values[result[i].name]=parseFloat(result[i].value);
-		            	}
-		              	controller.setMachineTool(values);
-		              	$(this).dialog("close");
-		            },
-		          	"Cancel": function()
-		            {
-	          			$(this).dialog("close");
-		            }
-		        }
-		      });
-		}
-		else
-		{
-			var html = 	'<ul><li>'+machineType+' does not support tool settings</li></ul>';
-			this.dialog.append($(html));
-			this.dialog.dialog(
-		      {
-		      width: 400,
-		      buttons: 
-		        {
-		            "Ok": function()
-		            {
-		              	$(this).dialog("close");
-		            },
-		          	"Cancel": function()
-		            {
-	          			$(this).dialog("close");
-		            }
-		        }
-		      });
-		}
-	};
-*/
-/**
- * @author Filipe Caixeta / http://filipecaixeta.com.br/
- */
+/* ======== Tutorial Modal — arrastável e redimensionável ======== */
+#tutorialModal {
+    display: none;
+    position: absolute;
+    background: #1e1b1b;
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px #132511;
+    z-index: 99999;
+    overflow: hidden;
+    min-width: 320px;
+    min-height: 220px;
+}
 
-CWS.UI = function (controller) 
-	{
-		this.controller = controller;
-		var topMenu = $("#topMenu");
-		$("#topMenu>nav > ul > li").each(function(i){$(this)
-			.mouseenter(function(){topMenu.css('height','90px');})
-			.mouseleave(function(){topMenu.css('height','45px');})
-		});
-		topMenu.click(
-			function  (ev) 
-			{
-				// Ajuste: garante que pegamos o "title" do elemento clicado OU do ancestral com title
-				var title = $(ev.target).closest('[title]').attr('title') || '';
-				switch (title)
-				{
-					case "New Project":
-						var d = new CWS.DialogBox(title);
-						d.newProject(controller);
-						break;
-					case "Open Project":
-						var d = new CWS.DialogBox(title);
-						d.openProject(controller);
-						break;
-					case "Exercise 1":
-						var d = new CWS.DialogBox(title);
-						d.openMachine(controller);
-						break;
-					case "Workpiece dimensions":
-						var d = new CWS.DialogBox(title);
-						d.workpieceDimensions(controller);
-						break;
-                    case "Export File":
-                        controller.exportToOBJ();
-                        break;
-                    case "Exercise 3":
-                        var d = new CWS.DialogBox(title);
-						d.tool(controller);
-                        break;
-					default:
-						break;
-					case "Exercise 2":
-					var d = new CWS.DialogBox(title);
-					d.machineSettings(controller);
-					break;
-				}
-			});
+/* Header para arrastar */
+#tutorialHeader {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(#132511, #375020ff);
+    border-bottom: 1px solid #2b2b2b;
+    font-weight: 600;
+    color: #eee;
+    padding: 0 10px;
+    cursor: move;
+    user-select: none;
+}
 
-		this.elementEditor = $(document.getElementById("editor"));
-		this.elementTopMenu = $(document.getElementById("topMenu"));
-		this.elementCanvasContainer = $(document.getElementById("canvasContainer"));
-		this.elementBottomMenu = $(document.getElementById("bottomMenu"));
-		this.elementBody = $(document.body);
-		this.resize();
-		$("#saveIcon").css('color', 'green').click(function (ev) 
-		{
-			controller.save(true);
-		});
-		$("#autoRunIcon").css('color', 'green').click(function () 
-		{
-			controller.autoRun=!controller.autoRun;
-			if (controller.autoRun===false)
-				$(this).css('color','red');
-			else
-			{
-				$(this).css('color','green');
-				controller.runInterpreter(true);
-			}
-		});
-		$("#runIcon").click(function (ev) 
-		{
-			controller.runInterpreter(true);
-		});
-		$("#run2DIcon").css('color', 'green').click(function (ev) 
-		{
-			controller.run2D=!controller.run2D;
-			if (controller.run2D===false)
-				$(this).css('color','red');
-			else
-			{
-				$(this).css('color','green');
-			}
-			controller.update2D();
-		});
-		/*$("#run3DIcon").css('color', 'green').click(function (ev) 
-		{
-			controller.run3D=!controller.run3D;
-			if (controller.run3D===false)
-				$(this).css('color','red');
-			else
-			{
-				$(this).css('color','green');
-			}
-			controller.update3D();
-		});*/
-		
-		var color = "green";
-		if (controller.renderer.displayWireframe===false)
-			color="red";
-		$("#wireframeIcon").css('color', color).click(function (ev) 
-		{
-			controller.runWireframe=!controller.runWireframe;
-			if (controller.runWireframe===false)
-			{
-				$(this).css('color','red');
-			}
-			else
-			{
-				$(this).css('color','green');
-			}
-		});
-		$("#runAnimationIcon").click(function (ev) 
-		{
-			controller.runAnimation();
-		});
+#tutorialContent {
+    background: #1e1b1b;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: calc(100% - 36px);
+    box-sizing: border-box;
+}
 
-		//adicionei - botões do painel - ligar
-		$("#mirrorToggleBtn").toggleClass("active", controller.mirrorEnabled === true);
-		$("#lockViewToggleBtn").toggleClass("active", controller.viewLocked === true);
+/* Botão X */
+#closeTutorial {
+    background: #4b0d0d;
+    color: #fff;
+    padding: 4px 10px;
+    font-size: 18px;
+    font-weight: bold;
+    line-height: 1;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+#closeTutorial:hover {
+    background: #6a1515;
+    transform: scale(1.1);
+}
 
-		$("#sideToolsToggle").click(function (ev)
-		{
-			$("#sideToolsPanel").toggleClass("open");
-			$(this).toggleClass("open");
-		});
+/* Vídeo responsivo */
+#tutorialVideo {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 8px;
+}
 
-		$("#mirrorToggleBtn").click(function (ev)
-		{
-			var on = controller.toggleMirror();
-			$(this).toggleClass("active", on);
-		});
+/* ======== FIM ADIÇÕES ======== */
 
-		$("#lockViewToggleBtn").click(function (ev)
-		{
-			var on = controller.toggleViewLocked();
-			$(this).toggleClass("active", on);
-		});
-		//termina aqui
-	}
+.dg .close-button { display: none !important; } /*Ocultar Open Control*/
 
-CWS.UI.prototype.constructor = CWS.UI;
+/* ================= SCROLL FIX MOBILE ================= */
 
-CWS.UI.prototype.resize = function()
-	{
-		var width = this.elementBody.innerWidth();
-		var height = this.elementBody.innerHeight();
-		
-		var editorWidth;
-		if (this.elementEditor.css('display')==='none')
-			editorWidth = 0;
-		else
-			editorWidth = this.elementEditor.innerWidth();
+/* Permite rolagem por toque */
+#exerciseList,
+#exerciseViewer,
+#testContainer,
+#aboutContent,
+#testFeedback {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
 
-		this.elementTopMenu.innerWidth(width-editorWidth);
-		this.elementCanvasContainer.innerWidth(width-editorWidth);
-		this.controller.renderer.setSize(width-editorWidth,height);
-		this.elementBottomMenu.innerWidth(width-editorWidth);
-	};
+/* Corrige scroll no container principal no celular */
+@media (max-width: 600px) {
+    #exerciseContent {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
 
-CWS.UI.prototype.createStats = function (v) 
-	{
-		if (v===false)
-			return {update:function(){}};
-		var maincanvasdiv = document.getElementById("canvasContainer");
-		var width = maincanvasdiv.offsetWidth;
-		var height = maincanvasdiv.offsetHeight;
 
-		stats = new Stats();
-		stats.domElement.style.position = 'absolute';
-		stats.domElement.style.bottom = '0px';
-		stats.domElement.style.right = '0px';
-		maincanvasdiv.appendChild( stats.domElement );
-		return stats;
-	};
+</style>
 
-CWS.DialogBox = function (title)
-	{
-		$("#dialogBox").remove();
-		this.dialog = $( '<div id="dialogBox" title="'+title+'" ></div>');
-		// Garante que o elemento está no DOM (ajuda a evitar qualquer atraso do jQuery UI)
-		$("body").append(this.dialog);
-	};
+</head>
+<body>
+<div id="editor"></div>
+<div id="topMenu">
+<nav>
+    <ul>
+        <li><div id="fileButton"><span title="Arquivo" class="icon icon-folder-open"></span>Arquivo</div></li>
+        <li><div id="openExercises"><span title="Exercícios" class="icon icon-pencil"></span>Exercícios</div></li>
+        <li><div><span title="Sobre" class="icon icon-info"></span>Sobre</div></li>
+        <li><div><span title="Tutorial" class="icon icon-play3 notImplemented"></span>Tutorial</div>
+    </ul>
+</nav>
+<!--<span id="machineIcon"></span> comentado--> 
+<span id="machineIcon">
+    <img src="images/iconiff.jpg" style="width: 50px;height:36px;"> 
+</span>
+<!--simbolo do if-->
 
-CWS.DialogBox.prototype.constructor = CWS.DialogBox;
+</div>
 
-CWS.DialogBox.prototype.newProject = function (controller)
-	{
-		var html = '<form id="menuNewProject">'+
-			'<ul>'+
-			'  <li>'+
-			'    <label for= "projectName" >Project Name</label>'+
-			'    <input type= "text" name= "projectName" />'+
-			'  </li>'+
-			'  <li>'+
-			'    <label for= "machineType" >Machine</label>'+
-			'    <input type="radio" name="machineType" value="Lathe" checked> Lathe'+
-			'    <input type="radio" name="machineType" value="Mill"> Mill'+
-			'    <input type="radio" name="machineType" value="3D Printer"> 3D Printer'+
-			'  </li>'+
-			'</ul>'+
-			'</form>';
-		this.dialog.append($(html));
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	            "Create": function()
-	            {
-	            	var values = {};
-	            	var result = $(this.firstChild).serializeArray();
-	            	for (var i = 0; i < result.length; i++) 
-	            	{
-	            		values[result[i].name]=result[i].value;
-	            	}
-	              	controller.createProject(values);
-	              	$(this).dialog("close");
-	            },
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+<!-- File menu dropdown -->
+<div id="fileMenu">
+    <button id="newFile">Novo</button>
+    <button id="saveFile">Salvar</button>
+    <button id="openFile">Abrir</button>
+    <input type="file" id="fileInputFallback" accept=".txt" style="display:none" />
+</div>
 
-CWS.DialogBox.prototype.openProject = function (controller)
-	{
-		html = '<ul class="tableList">';
-		var fileList = Object.keys(controller.listProjects());
-		for (var i = 0; i < fileList.length; i++) 
-		{
-			html += '<li><span class="icon icon-file-text2"></span>'+fileList[i]+'</li>';
-		}
-		html += "</ul>";
-        var dialog = this.dialog;
-		html = $(html).click(function (event) 
-			{
-                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
-                    return;
-                var projectName="";
-                if (event.target.tagName.toLocaleLowerCase()=="li")
-                {
-                    projectName = event.target.textContent;
-                }
-                else
-                {
-                    projectName = event.target.parentElement.textContent;
-                }
-                controller.openProject(projectName);
-                dialog.dialog("close");
-			});
-		this.dialog.append(html);
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+<div id="canvasContainer">
+    <div id="messages"></div>
+    <!-- adicionei - painel -->
+    <div id="sideToolsToggle" title="Ferramentas de visualização">⛶</div>
+    <div id="sideToolsPanel">
+        <button id="mirrorToggleBtn" class="sideToolsBtn">Espelhar peça</button>
+        <button id="lockViewToggleBtn" class="sideToolsBtn">Travar tela</button>
+    </div>
+    <!-- termina aqui -->
+</div>
 
-/**CWS.DialogBox.prototype.openMachine = function (controller)
-	{
-		html = '<ul class="tableList">'+
-		'  <li><span class="icon icon-lathe"></span>Lathe</li>'+
-		'  <li><span class="icon icon-mill"></span>Mill</li>'+
-		'  <li><span class="icon icon-printer"></span>3D Printer</li>'+
-		'</ul>';
-        var dialog = this.dialog;
-		html = $(html).click(function (event) 
-			{
-                if (event.target.parentElement.tagName.toLocaleLowerCase()=="div")
-                    return;
-                var machineName="";
-                if (event.target.tagName.toLocaleLowerCase()=="li")
-                {
-                    machineName = event.target.textContent;
-                }
-                else
-                {
-                    machineName = event.target.parentElement.textContent;
-                }
-                controller.openMachine(machineName);
-                dialog.dialog("close");
-			});
-		this.dialog.append(html);
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	}; **/
+<div id="exerciseWindow">
+    <div class="cwsx-header">
+        <div class="cwsx-title">Exercícios</div>
+        <button id="closeExercise">X</button>
+    </div>
 
-/* =========================
-   Exercício 1 (OpenMachine)
-   ========================= */
-CWS.DialogBox.prototype.openMachine = function(controller) {
-    // HTML inicial: imagem do enunciado
-    var html = `
-        <div style="text-align:center;">
-            <img id="exercise1" src="images/exercise1.png.jpg" alt="Exercise 1" style="width:100%; max-width:355px; height:auto; margin-bottom:10px;">
+    <div id="exerciseContent">
+        <div id="exerciseList">
+            <button class="exerciseBtn" data-ex="1">Exercício 1 (✮☆☆☆)</button>
+            <button class="exerciseBtn" data-ex="2">Exercício 2 (✮☆☆☆)</button>
+            <button class="exerciseBtn" data-ex="3">Exercício 3 (✮✮☆☆)</button>
+            <button class="exerciseBtn" data-ex="4">Exercício 4 (✮✮☆☆)</button>
+            <button class="exerciseBtn" data-ex="5">Exercício 5 (✮✮✮☆)</button>
+            <button class="exerciseBtn" data-ex="6">Exercício 6 (✮✮✮☆)</button>
+            <button class="exerciseBtn" data-ex="7">Exercício 7 (✮✮✮☆)</button>
+            <button class="exerciseBtn" data-ex="8">Exercício 8 (✮✮✮☆)</button>
+            <button class="exerciseBtn" data-ex="9">Exercício 9 (✮✮✮✮)</button>
+            <button class="exerciseBtn" data-ex="10">Exercício 10 (✮✮✮✮)</button>
         </div>
-    `;
 
-    var dialog = this.dialog;
-    dialog.empty().append(html);
+        <div id="exerciseViewer">
+            <h3 id="exerciseTitle">Selecione um exercício</h3>
+            <div id="imageWrap">
+                <img id="exerciseImage" src="" alt="Exercise Image">
+                <img id="answerImage" src="" alt="Answer Image">
+            </div>
 
-    // Pré-carrega as imagens para evitar atraso na primeira troca
-    (function preload(){
-        var a = new Image(); a.src = "images/answer1.png.jpg";
-        var b = new Image(); b.src = "images/exercise1.png.jpg";
-    })();
+            <div class="viewer-buttons">
+                <button id="viewCoder" class="btn-coder">Código</button>
+                <button id="viewTest" class="btn-coder">Testar</button>
+               <!-- <button id="closeViewer" class="btn-close">Close</button>-->
+            </div>
 
-    // Ao clicar em "Code": mostra a RESPOSTA e muda o botão para "Return"
-    function showResultado() {
-        $("#exercise1").attr("src", "images/answer1.png.jpg");
-        dialog.dialog("option", "buttons", {
-            "Return": showVoltar,
-            "Close": function() { $(this).dialog("close"); }
-        });
+            <div id="testContainer">
+                <label for="modeSelect">Selecione o modo utilizado:</label>
+                <select id="modeSelect">
+                    <option value="G90">Absoluto G90</option>
+                    <option value="G91">Incremental G91</option>
+                </select>
+                <textarea id="userGcode" placeholder="Insira o G-Code para a correção"></textarea>
+                <div id="testButtons">
+                    <button id="backButton">Voltar</button>
+                    <button id="checkButton">Testar</button>
+                </div>
+                <div id="testFeedback"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- status message -->
+<div id="statusMessage"></div>
+
+<!-- save confirm modal -->
+<div id="saveConfirmModal" role="dialog" aria-modal="true">
+  <p>Você gostaria de salvar o G-Code?</p>
+  <div class="modalButtons">
+    <button class="saveBtn" id="modalSaveBtn">Salvar</button>
+    <button class="dontSaveBtn" id="modalDontSaveBtn">Não Salvar</button>
+  </div>
+</div>
+
+<script>
+var controller, ui;
+window.addEventListener("load", (function () {
+    controller = new CWS.Controller(
+        new CWS.CodeEditor(),
+        new CWS.Storage({useCompression:true,useLocalStorage:true}),
+        new CWS.Renderer("renderer1"),
+        new CWS.Motion(),
+        true
+    );
+
+    ui = new CWS.UI(controller);
+    var stats = ui.createStats(true);
+
+    function onWindowResize() {
+        controller.windowResize();
+        ui.resize();
     }
 
-    // Ao clicar em "Return": volta ao enunciado e muda o botão para "Code"
-    function showVoltar() {
-        $("#exercise1").attr("src", "images/exercise1.png.jpg");
-        dialog.dialog("option", "buttons", {
-            "Code": showResultado,
-            "Close": function() { $(this).dialog("close"); }
-        });
+    function animate() {
+        requestAnimationFrame( animate );
+        stats.update();
+        controller.motion.run();
+        controller.render();
+    }
+    animate();
+
+    window.addEventListener( 'resize', onWindowResize, false );
+    controller.runInterpreter();
+
+    // helper: show status
+    function showStatus(msg, isError){
+        const s = document.getElementById("statusMessage");
+        if(!s) return;
+        s.style.background = isError ? "#b33" : "#2b2b2b";
+        s.textContent = msg;
+        s.style.display = "block";
+        setTimeout(()=>{ s.style.display = "none"; }, 2200);
     }
 
-    // Abre o diálogo com título e botões iniciais
-    dialog.dialog({
-        title: "Exercise 1",
-        width: 400,
-        buttons: {
-            "Code": showResultado,
-            "Close": function() { $(this).dialog("close"); }
+    // File menu toggle
+    const fileBtn = document.getElementById("fileButton");
+    const fileMenu = document.getElementById("fileMenu");
+    fileBtn.addEventListener("click", function(e){
+        e.stopPropagation();
+        fileMenu.style.display = fileMenu.style.display === "block" ? "none" : "block";
+    });
+    document.addEventListener("click", function(e){
+        if(!fileMenu.contains(e.target) && e.target !== fileBtn) fileMenu.style.display = "none";
+    });
+
+    // utility to get/set editor content (ACE compatibility)
+    function getEditorContent(){
+        try{
+            if(controller && controller.editor && controller.editor.editor && typeof controller.editor.editor.getValue === "function") return controller.editor.editor.getValue();
+            if(controller && controller.editor && typeof controller.editor.getValue === "function") return controller.editor.getValue();
+            if(window.editor && typeof window.editor.getValue === "function") return window.editor.getValue();
+        }catch(e){ console.warn(e); }
+        return "";
+    }
+    function setEditorContent(txt){
+        try{
+            if(controller && controller.editor && controller.editor.editor && typeof controller.editor.editor.setValue === "function") { controller.editor.editor.setValue(txt, -1); return true; }
+            if(controller && controller.editor && typeof controller.editor.setValue === "function") { controller.editor.setValue(txt, -1); return true; }
+            if(window.editor && typeof window.editor.setValue === "function") { window.editor.setValue(txt, -1); return true; }
+        }catch(e){ console.warn(e); }
+        return false;
+    }
+
+    // ===== Salvamento universal com nome personalizado =====
+    function saveToFile(defaultName = "gcode.txt"){
+        const code = getEditorContent() || "";
+
+        if (!code.trim()) {
+            showStatus("Nada para salvar.", true);
+            return false;
+        }
+
+        // Pergunta o nome do arquivo
+        let fileName = prompt("Digite o nome do arquivo:", defaultName);
+
+        if (!fileName) {
+            showStatus("Salvamento cancelado.", true);
+            return false;
+        }
+
+        // Garante extensão .txt
+        if (!fileName.toLowerCase().endsWith(".txt")) {
+            fileName += ".txt";
+        }
+
+        const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.style.display = "none";
+
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
+
+        showStatus(`Arquivo "${fileName}" exportado.`);
+        return true;
+    }
+
+
+
+    // Open with File System Access API if available, else fallback to input
+    async function openFromFile(){
+        if(window.showOpenFilePicker){
+            try{
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{ description: "", accept: {"text/plain":[".txt"]} }],
+                    multiple: false
+                });
+                const file = await handle.getFile();
+                const text = await file.text();
+                if(!setEditorContent(text)) showStatus("Editor não encontrado.", true);
+                else showStatus("Arquivo carregado!");
+                return true;
+            }catch(err){
+                showStatus("Abertura cancelada ou falha.", true);
+                console.warn(err);
+                return false;
+            }
+        } else {
+            // fallback to hidden input
+            const input = document.getElementById("fileInputFallback");
+            return new Promise((resolve)=>{
+                input.onchange = function(e){
+                    const f = e.target.files && e.target.files[0];
+                    if(!f){ showStatus("Nenhum arquivo selecionado.", true); resolve(false); return; }
+                    const reader = new FileReader();
+                    reader.onload = function(evt){
+                        const txt = evt.target.result;
+                        if(!setEditorContent(txt)) showStatus("Editor não encontrado.", true);
+                        else showStatus("Arquivo carregado!");
+                        resolve(true);
+                    };
+                    reader.onerror = function(){
+                        showStatus("Erro ao ler arquivo.", true);
+                        resolve(false);
+                    };
+                    reader.readAsText(f);
+                    input.value = "";
+                };
+                input.click();
+            });
+        }
+    }
+
+    // Bind Save/Open/New
+    document.getElementById("saveFile").addEventListener("click", async function(e){
+        e.stopPropagation();
+        fileMenu.style.display = "none";
+        await saveToFile("");
+    });
+
+    document.getElementById("openFile").addEventListener("click", async function(e){
+        e.stopPropagation();
+        fileMenu.style.display = "none";
+        await openFromFile();
+    });
+
+    // New: show modal asking to save
+    const modal = document.getElementById("saveConfirmModal");
+    const modalSaveBtn = document.getElementById("modalSaveBtn");
+    const modalDontSaveBtn = document.getElementById("modalDontSaveBtn");
+
+    document.getElementById("newFile").addEventListener("click", function(e){
+        e.stopPropagation();
+        fileMenu.style.display = "none";
+        modal.style.display = "block";
+    });
+
+    modalSaveBtn.addEventListener("click", async function(){
+        modal.style.display = "none";
+        const ok = await saveToFile("");
+        // proceed to clear editor even if save cancelled? follow user's instructions: after Save action, then clear.
+        setEditorContent("");
+        showStatus("Editor limpo.");
+    });
+
+    modalDontSaveBtn.addEventListener("click", function(){
+        modal.style.display = "none";
+        setEditorContent("");
+        showStatus("Editor limpo.");
+    });
+
+
+    // rest of original bindings (exercises etc.) kept intact
+    $("#exerciseWindow").draggable({ handle: ".cwsx-header" }).resizable({
+        minWidth: 320,
+        minHeight: 200,
+        alsoResize: "#exerciseViewer, #imageWrap, #testContainer"
+    });
+
+    $("#openExercises").on("click", function(){
+        $("#exerciseWindow").fadeIn();
+    });
+    $("#closeExercise").on("click", function(){
+        closeExerciseWindow();
+    });
+    $("#exerciseWindow").on("click", "#closeViewer", function(){
+        closeExerciseWindow();
+    });
+
+    function closeExerciseWindow(){
+        $("#exerciseWindow").fadeOut();
+        $("#exerciseTitle").text("Selecione um exercício");
+        $("#exerciseImage, #answerImage").hide().attr("src","");
+        $("#testContainer").hide();
+        $(".viewer-buttons").show();
+    }
+
+    function setImage($img, path){
+        $img.off("error").attr("src", path);
+    }
+
+    var currentEx = null;
+    var showingAnswer = false;
+
+    $(document).on("click", ".exerciseBtn", function(){
+        currentEx = $(this).data("ex");
+        showingAnswer = false;
+        $("#exerciseTitle").text("Exercício " + currentEx);
+        setImage($("#exerciseImage"), "images/Ativ" + currentEx + ".jpg");
+        $("#exerciseImage").show();
+        $("#answerImage").hide();
+        $("#testContainer").hide();
+        $(".viewer-buttons").show();
+    });
+
+    $("#exerciseWindow").on("click", "#viewCoder", function(){
+        if(!currentEx) return;
+        if(showingAnswer){
+            $("#exerciseTitle").text("Exercício " + currentEx);
+            $("#exerciseImage").show();
+            $("#answerImage").hide();
+            showingAnswer = false;
+        } else {
+            $("#exerciseTitle").text("Resposta " + currentEx);
+            setImage($("#answerImage"), "images/Resp" + currentEx + ".jpg");
+            $("#answerImage").show();
+            $("#exerciseImage").hide();
+            showingAnswer = true;
         }
     });
+
+const gabaritos = {
+	"1": {"G90": `G1 X60 Z0;\nG1 X60 Z-30;\nG1 X80 Z-30;\nG1 X80 Z-50;\nG1 X100 Z-50;\nG1 X100 Z-120;`,
+        "G91": `G1 X60 Z0;\nG1 X0 Z-30;\nG1 X20 Z0;\nG1 X0 Z-20;\nG1 X20 Z0;\nG1 X0 Z-70;`},
+    "2": {"G90": `G1 X80 Z0;\nG1 X80 Z-30;\nG1 X100 Z-50;\nG1 X100 Z-90;\nG1 X120 Z-100;\nG1 X120 Z-140;\nG1 X140 Z-140;\nG1 X140 Z-190;`,
+        "G91": `G1 X80 Z0;\nG1 X0 Z-30;\nG1 X20 Z-20;\nG1 X0 Z-40;\nG1 X20 Z-10;\nG1 X0 Z-40;\nG1 X20 Z0;\nG1 X0 Z-50;`},
+    "3": {"G90": `G1 X40 Z0;\nG1 X46 Z-3;\nG1 X46 Z-23;\nG1 X76 Z-23;\nG1 X84 Z-27;\nG1 X84 Z-42;\nG1 X124 Z-82;\nG1 X144 Z-82;\nG1 X150 Z-85;\nG1 X150 Z-135;`,
+        "G91": `G1 X40 Z0;\nG1 X6 Z-3;\nG1 X0 Z-20;\nG1 X30 Z0;\nG1 X8 Z-4;\nG1 X0 Z-15;\nG1 X40 Z-40;\nG1 X20 Z0;\nG1 X6 Z-4;\nG1 X0 Z-50;`},
+    "4": {"G90": `G1 X60 Z0;\nG1 X60 Z-30;\nG1 X80 Z-45;\nG1 X100 Z-45;\nG1 X100 Z-65;\nG1 X120 Z-65;\nG1 X132 Z-71;\nG1 X132 Z-121;`,
+        "G91": `G1 X60 Z0;\nG1 X0 Z-30;\nG1 X20 Z-15;\nG1 X20 Z0;\nG1 X0 Z-20;\nG1 X20 Z0;\nG1 X12 Z-6;\nG1 X0 Z-50;`},
+    "5": {"G90": `G1 X20 Z0;\nG3 X30 Z-5 R5;\nG1 X30 Z-15;\nG2 X40 Z-20 R5;\nG1 X60 Z-20;\nG1 X60 Z-30;\nG1 X70 Z-30;\nG1 X76 Z-33;\nG1 X76 Z-63;`,
+        "G91": `G1 X20 Z0;\nG3 X10 Z-5 R5;\nG1 X0 Z-10;\nG2 X10 Z-5 R5;\nG1 X20 Z0;\nG1 X0 Z-10;\nG1 X10 Z0;\nG1 X6 Z-3;\nG1 X0 Z-30;`},
+    "6": {"G90": `G1 X40 Z0;\nG2 X50 Z-5 R5;\nG1 X50 Z-15;\nG3 X60 Z-20 R5;\nG1 X60 Z-35;\nG1 X76 Z-45;\nG1 X76 Z-55;\nG1 X82 Z-55;\nG3 X90 Z-59 R4;\nG1 X90 Z-89;`,
+        "G91": `G1 X40 Z0;\nG2 X10 Z-5 R5;\nG1 X0 Z-10;\nG3 X10 Z-5 R5;\nG1 X0 Z-15;\nG1 X16 Z-10;\nG1 X0 Z-10;\nG1 X6 Z0;\nG3 X8 Z-4 R4;\nG1 X0 Z-30;`},
+    "7": {"G90": `G3 X29.82 Z-7.2 R19;\nG1 X29.82 Z-17.2;\nG1 X43.82 Z-32.2;\nG1 X55.82 Z-32.2;\nG1 X55.82 Z-42.2;\nG2 X63.82 Z-46.2 R4;\nG1 X63.82 Z-66.2;`,
+        "G91": `G3 X29.82 Z-7.2 R19;\nG1 X0 Z-10;\nG1 X14 Z-15;\nG1 X12 Z0;\nG1 X0 Z-10;\nG2 X8 Z-4 R4;\nG1 X0 Z-20;`},
+    "8": {"G90": `G1 X40 Z0;\nG1 X48 Z-4;\nG1 X48 Z-10;\nG2 X48 Z-30 R15.55;\nG1 X48 Z-38;\nG2 X54 Z-41 R3;\nG1 X68 Z-41;\nG1 X68 Z-71;`,
+        "G91": `G1 X40 Z0;\nG1 X8 Z-4;\nG1 X0 Z-6;\nG2 X0 Z-20 R15.55;\nG1 X0 Z-8;\nG2 X6 Z-3 R3;\nG1 X14 Z0;\nG1 X0 Z-30;`},
+    "9": {"G90": `G1 X40 Z0;\nG3 X50 Z-5 R5;\nG1 X50 Z-15;\nG2 X50 Z-41.44 R20;\nG1 X50 Z-53.44;\nG2 X56 Z-56.44 R3;\nG1 X70 Z-56.44;\nG1 X70 Z-116.44;`,
+        "G91": `G1 X40 Z0;\nG3 X10 Z-5 R5;\nG1 X0 Z-10;\nG2 X0 Z-26.44 R20;\nG1 X0 Z-12;\nG2 X6 Z-3 R3;\nG1 X14 Z0;\nG1 X0 Z-60;`},
+    "10": {"G90": `G1 X22 Z0;\nG1 X30 Z-4;\nG1 X30 Z-10;\nG2 X30 Z-25.08 R13;\nG1 X30 Z-32.08;\nG1 X40 Z-32.08;\nG1 X40 Z-44.08;\nG2 X50 Z-49.08 R5;\nG1 X50 Z-79.08;`,
+         "G91": `G1 X22 Z0;\nG1 X8 Z-4;\nG1 X0 Z-6;\nG2 X0 Z-15.08 R13;\nG1 X0 Z-7;\nG1 X10 Z0;\nG1 X0 Z-12;\nG2 X10 Z-5 R5;\nG1 X0 Z-30;`}
 };
 
-/* =========================
-   Dimensões da peça
-   ========================= */
-CWS.DialogBox.prototype.workpieceDimensions = function (controller)
-	{
-        var machineType = controller.getMachineType();
-        var workpiece = controller.getWorkpiece();
-        var html = "";
-        if (machineType=="Lathe")
-        {
-            html = '<form id="workpieceDimensions">'+
-            '<ul>'+
-            '  <li>'+
-            '    <label for= "x" >Diameter</label>'+
-            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
-            '  </li>'+
-            '   <li>'+
-            '    <label for= "z" >Lenght</label>'+
-            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
-            '  </li>'+
-            '</ul></form>';
-        }
-        else if (machineType=="Mill")
-        {
-            html = '<form id="workpieceDimensions">'+
-            '<ul>'+
-            '  <li>'+
-            '    <label for= "x" >Size X</label>'+
-            '    <input type= "text" name= "x" value="'+workpiece.x+'"/>'+
-            '  </li>'+
-            '  <li>'+
-            '    <label for= "y" >Size Y</label>'+
-            '    <input type= "text" name= "y" value="'+workpiece.y+'"/>'+
-            '  </li>'+
-            '   <li>'+
-            '    <label for= "z" >Size Z</label>'+
-            '    <input type= "text" name= "z" value="'+workpiece.z+'"/>'+
-            '  </li>'+
-            '</ul></form>';
-        }
-        else if (machineType=="3D Printer")
-        {
-            html = '<form id="workpieceDimensions">'+
-            '<ul>'+
-            '  <li>'+
-            '    <label for= "filamentDiameter" >Filament Diameter</label>'+
-            '    <input type= "text" name="filamentDiameter" value="'+workpiece.filamentDiameter+'"/>'+
-            '  </li>'+
-            '  <li>'+
-            '    <label for= "layerHeight" >Layer Height</label>'+
-            '    <input type= "text" name= "layerHeight" value="'+workpiece.layerHeight+'"/>'+
-            '  </li>'+
-            '</ul></form>';
-        }
-		this.dialog.append($(html));
-		this.dialog.dialog(
-	      {
-	      width: 400,
-	      buttons: 
-	        { 
-	            "Save": function()
-	            {
-	            	var values = {};
-	            	var result = $(this.firstChild).serializeArray();
-	            	for (var i = 0; i < result.length; i++) 
-	            	{
-	            		values[result[i].name]=parseFloat(result[i].value);
-	            	}
-	              	controller.setWorkpieceDimensions(values);
-	              	$(this).dialog("close");
-	            },
-	          	"Cancel": function()
-	            {
-          			$(this).dialog("close");
-	            }
-	        }
-	      });
-	};
+    $("#viewTest").on("click", function() {
+        $("#exerciseImage, #answerImage").hide();
+        $(".viewer-buttons").hide();
+        $("#testContainer").show();
+        $("#modeSelect").val("G90");
+        $("#userGcode").val("");
+        $("#testFeedback").html("");
+    });
 
-/***CWS.DialogBox.prototype.tool = function (controller)
-	{
-		var machineType = controller.getMachineType();
-		if (machineType==="Lathe")
-		{
-			var machine = controller.getMachine();
-			var html = 	'<form id="menuTool">'+
-						'<ul>'+
-						'  <li>'+
-						'    <label for= "toolradius" >Tool radius</label>'+
-						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
-						'  </li>'+
-						'</ul>'+
-						'</form>';
-			this.dialog.append($(html));
-			this.dialog.dialog(
-		      {
-		      width: 400,
-		      buttons: 
-		        {
-		            "Save": function()
-		            {
-		            	var values = {};
-		            	var result = $(this.firstChild).serializeArray();
-		            	for (var i = 0; i < result.length; i++) 
-		            	{
-		            		values[result[i].name]=parseFloat(result[i].value);
-		            	}
-		              	controller.setMachineTool(values);
-		              	$(this).dialog("close");
-		            },
-		          	"Cancel": function()
-		            {
-	          			$(this).dialog("close");
-		            }
-		        }
-		      });
-		}
-		else if (machineType==="Mill")
-		{
-			var machine = controller.getMachine();
-			var html = 	'<form id="menuTool">'+
-						'<ul>'+
-						'  <li>'+
-						'    <label for= "toolradius" >Tool radius</label>'+
-						'    <input type= "text" name= "toolradius" value="'+machine.tool.radius+'"/>'+
-						'  </li>'+
-						'  <li>'+
-						'    <label for= "toolangle" >Tool angle</label>'+
-						'    <input type= "text" name= "toolangle" value="'+machine.tool.angle+'"/>'+
-						'  </li>'+
-						'</ul>'+
-						'</form>';
-			this.dialog.append($(html));
-			this.dialog.dialog(
-		      {
-		      width: 400,
-		      buttons: 
-		        {
-		            "Save": function()
-		            {
-		            	var values = {};
-		            	var result = $(this.firstChild).serializeArray();
-		            	for (var i = 0; i < result.length; i++) 
-		            	{
-		            		values[result[i].name]=parseFloat(result[i].value);
-		            	}
-		              	controller.setMachineTool(values);
-		              	$(this).dialog("close");
-		            },
-		          	"Cancel": function()
-		            {
-	          			$(this).dialog("close");
-		            }
-		        }
-		      });
-		}
-		else
-		{
-			var html = 	'<ul><li>'+machineType+' does not support tool settings</li></ul>';
-			this.dialog.append($(html));
-			this.dialog.dialog(
-		      {
-		      width: 400,
-		      buttons: 
-		        {
-		            "Ok": function()
-		            {
-		              	$(this).dialog("close");
-		            },
-		          	"Cancel": function()
-		            {
-	          			$(this).dialog("close");
-		            }
-		        }
-		      });
-		}
-	}; ***/
-
-/* =========================
-   Exercício 3 (Tool)
-   ========================= */
-CWS.DialogBox.prototype.tool = function(controller) {
-    var html = `
-        <div style="text-align:center;">
-            <img id="exercise3" src="images/exercise3.png.jpg" alt="Tool" style="width:100%; max-width:355px; height:auto; margin-bottom:10px;">
-        </div>
-    `;
-
-    var dialog = this.dialog;
-    dialog.empty().append(html);
-
-    // Pré-carrega as imagens para evitar atraso
-    (function preload(){
-        var a = new Image(); a.src = "images/answer3.png.jpg";
-        var b = new Image(); b.src = "images/exercise3.png.jpg";
-    })();
-
-    function showResultado() {
-        $("#exercise3").attr("src", "images/answer3.png.jpg");
-        dialog.dialog("option", "buttons", {
-            "Return": showVoltar,
-            "Close": function() { $(this).dialog("close"); }
-        });
-    }
-
-    function showVoltar() {
-        $("#exercise3").attr("src", "images/exercise3.png.jpg");
-        dialog.dialog("option", "buttons", {
-            "Code": showResultado,
-            "Close": function() { $(this).dialog("close"); }
-        });
-    }
-
-    dialog.dialog({
-        title: "Exercise 3",
-        width: 400,
-        buttons: {
-            "Code": showResultado,
-            "Close": function() { $(this).dialog("close"); }
+    $("#backButton").on("click", function() {
+        $("#testContainer").hide();
+        $(".viewer-buttons").show();
+        showingAnswer = false;
+        if(currentEx){
+            $("#exerciseTitle").text("Exercícios " + currentEx);
+            setImage($("#exerciseImage"), "images/Ativ" + currentEx + ".jpg");
+            $("#exerciseImage").show();
+            $("#answerImage").hide();
         }
     });
-};
 
-/* =========================
-   Exercício 2 (Machine Settings)
-   ========================= */
-CWS.DialogBox.prototype.machineSettings = function(controller) {
-    var html = `
-        <div style="text-align:center;">
-            <img id="exercise2" src="images/exercise2.png.jpg" alt="Machine Settings" style="width:100%; max-width:350px; height:auto; margin-bottom:10px;">
-        </div>
-    `;
+    $("#checkButton").on("click", function() {
+        const ex = currentEx;
+        const mode = $("#modeSelect").val();
+        const userCode = $("#userGcode").val().trim();
+        const userLines = userCode.split('\n');
+        const correctLines = gabaritos[ex][mode].split('\n');
+        let feedback = "";
+        let display = "";
 
-    var dialog = this.dialog;
-    dialog.empty().append(html);
-
-    // Pré-carrega para evitar atraso
-    (function preload(){
-        var a = new Image(); a.src = "images/answer2.png.jpg";
-        var b = new Image(); b.src = "images/exercise2.png.jpg";
-    })();
-
-    function showResultado() {
-        $("#exercise2").attr("src", "images/answer2.png.jpg");
-        dialog.dialog("option", "buttons", {
-            "Return": showVoltar,
-            "Close": function() { $(this).dialog("close"); }
+        userLines.forEach((line,i)=>{
+            const uline = line.replace(/\s/g,'');
+            const cline = (correctLines[i]||"").replace(/\s/g,'');
+            if(uline !== cline){
+                display += `<div class="line-error">${line} <- Incorreto</div>`;
+                display += `<div class="line-correct">${correctLines[i]} <- Corrija esta linha</div>`;
+            } else {
+                display += `<div>${line}</div>`;
+            }
         });
-    }
 
-    function showVoltar() {
-        $("#exercise2").attr("src", "images/exercise2.png.jpg");
-        dialog.dialog("option", "buttons", {
-            "Code": showResultado,
-            "Close": function() { $(this).dialog("close"); }
-        });
-    }
-
-    dialog.dialog({
-        title: "Exercise 2",
-        width: 400,
-        buttons: {
-            "Code": showResultado,
-            "Close": function() { $(this).dialog("close"); }
+        if(userCode.replace(/\s/g,'') === gabaritos[ex][mode].replace(/\s/g,'')){
+            feedback = "✅O código está correto. Muito bem!";
+            $("#testFeedback").html(feedback);
+        } else {
+            feedback = "❌O código está incorreto.\nLinhas incorretas estão em vermelho e corretas em verde.";
+            $("#testFeedback").html(feedback + "<br>" + display);
         }
     });
-};
+
+})); // end load listener
+</script>
+
+<!-- ===== Verificação Instantânea de Código G — Versão Interface Segura ===== -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  setTimeout(() => {
+    // Tenta localizar o editor (mantendo compatibilidade)
+    let aceEditor = null;
+    if (window.controller?.editor?.editor) aceEditor = window.controller.editor.editor;
+    else if (window.controller?.editor) aceEditor = window.controller.editor;
+    else if (window.editor) aceEditor = window.editor;
+    else if (window.ace?.edit) aceEditor = ace.edit(document.querySelector(".ace_editor"));
+
+    if (!aceEditor) {
+      console.warn("❌ Nenhum editor ACE encontrado. Verificação não ativada.");
+      return;
+    }
+
+    // Cria o painel de feedback dentro do canvasContainer (em baixo do desenho)
+    const canvasContainer = document.getElementById("canvasContainer");
+    const feedbackDiv = document.createElement("div");
+    feedbackDiv.id = "gcode-feedback";
+    feedbackDiv.style.position = "absolute";
+    feedbackDiv.style.bottom = "8px";
+    feedbackDiv.style.left = "50%";
+    feedbackDiv.style.transform = "translateX(-50%)";
+    feedbackDiv.style.background = "rgba(255,255,255,0.9)";
+    feedbackDiv.style.border = "1px solid #d14826";
+    feedbackDiv.style.borderRadius = "6px";
+    feedbackDiv.style.padding = "6px 10px";
+    feedbackDiv.style.fontFamily = "monospace";
+    feedbackDiv.style.color = "#d14826";
+    feedbackDiv.style.fontSize = "13px";
+    feedbackDiv.style.whiteSpace = "pre-line";
+    feedbackDiv.style.display = "none";
+    feedbackDiv.style.zIndex = "99999";
+
+    canvasContainer.appendChild(feedbackDiv);
+
+    // Função de validação
+    function validarGCode(code) {
+  const linhas = code.split("\n");
+  const avisos = [];
+
+  // Comandos permitidos e letras válidas
+  const letrasValidas = ["G", "X", "Y", "Z", "R", "M"];
+
+  for (let i = 0; i < linhas.length; i++) {
+    const linhaOriginal = linhas[i];
+    const linha = linhaOriginal.trim();
+
+    if (!linha) continue;
+
+    // Extrai as partes: G1 X10 Y20, G1X50, etc.
+    const partes = linha.match(/[A-Za-z][0-9\.\-]*/g) || [];
+
+    // Se não tiver G no início → inválido
+    if (!/^G\d+/i.test(linha)) {
+      avisos.push(`⚠️ Linha ${i + 1}: comando inválido → "${linhaOriginal}"`);
+      continue;
+    }
+
+    // Verifica cada parte da linha
+    for (const parte of partes) {
+      const letra = parte[0].toUpperCase();
+
+      // Se tiver letra não permitida → erro
+      if (!letrasValidas.includes(letra)) {
+        avisos.push(`⚠️ Linha ${i + 1}: parâmetro inválido "${letra}"`);
+        break;
+      }
+
+      // Se a letra tiver que ter número e não tiver, erro
+      if (["X", "Y", "Z", "R"].includes(letra)) {
+        const numero = parte.slice(1);
+        if (numero === "" || isNaN(Number(numero))) {
+          avisos.push(`⚠️ Linha ${i + 1}: valor ausente ou inválido em "${parte}"`);
+          break;
+        }
+      }
+    }
+  }
+
+  return avisos;
+}
+
+
+    // Atualiza o painel
+    function atualizarFeedback() {
+      const codigo = aceEditor.getValue ? aceEditor.getValue() : "";
+      const avisos = validarGCode(codigo);
+
+      if (avisos.length > 0) {
+        feedbackDiv.innerHTML = avisos.join("<br>");
+        feedbackDiv.style.display = "block";
+      } else {
+        feedbackDiv.style.display = "none";
+        feedbackDiv.innerHTML = "";
+      }
+    }
+
+    // Observa mudanças no código
+    if (aceEditor.session?.on) aceEditor.session.on("change", atualizarFeedback);
+    else if (aceEditor.on) aceEditor.on("change", atualizarFeedback);
+
+    console.log("✅ Verificação instantânea ativada (versão visual segura)");
+  }, 2000);
+});
+
+//foi feito alterações para funcionar corretamente
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelector("li div span[title='Tutorial']").parentElement.addEventListener("click", function () {
+        const modal = document.getElementById("tutorialModal");
+        const video = document.getElementById("tutorialVideo");
+
+        // Posiciona no centro da tela ao abrir (apenas na primeira vez)
+        if (!modal._positioned) {
+            modal.style.left = Math.max(0, (window.innerWidth - 760) / 2) + "px";
+            modal.style.top = Math.max(0, (window.innerHeight - 480) / 2) + "px";
+            modal.style.width = "760px";
+            modal.style.height = "480px";
+            modal._positioned = true;
+        }
+
+        modal.style.display = "block";
+        video.currentTime = 0;
+        video.play();
+    });
+
+    // Fechar ao clicar no X
+    document.getElementById("closeTutorial").addEventListener("click", function () {
+        const modal = document.getElementById("tutorialModal");
+        const video = document.getElementById("tutorialVideo");
+
+        modal.style.display = "none";
+        video.pause();
+    });
+    //termina aqui
+});
+
+// === Tutorial draggable + resizable via jQuery UI ===
+document.addEventListener("DOMContentLoaded", function () {
+    $(function () {
+        $("#tutorialModal").draggable({ handle: "#tutorialHeader" }).resizable({
+            minWidth: 320,
+            minHeight: 220,
+            alsoResize: "#tutorialVideo"
+        });
+    });
+});
+
+// === About Window ===
+document.addEventListener("DOMContentLoaded", function() {
+  // cria elemento base
+  const aboutHTML = `
+    <div id="aboutWindow">
+      <div class="cwsx-header">
+        <div class="cwsx-title">Sobre</div>
+        <button id="closeAbout">X</button>
+      </div>
+      <div id="aboutContent">
+        <p><strong>Sobre o PlatD-CNC</strong><br>
+        Plataforma Didática para Simulação em CNC</p>
+        
+        <p>O PlatD-CNC é uma plataforma educacional online gratuita desenvolvida especificamente para o ensino e aprendizagem de programação CNC através de simulação gráfica em 2D. Nossa ferramenta foca na simulação de operações de torno utilizando código G, proporcionando uma experiência de aprendizado acessível e didática.</p>
+
+        <p><strong>Objetivo</strong><br>
+        Esta plataforma foi criada para resolver os principais desafios enfrentados no ensino de CNC:</p>
+        <ul>
+          <li>Alto custo de equipamentos para treinamento</li>
+          <li>Simuladores complexos que exigem conhecimento prévio avançado</li>
+          <li>Falta de acesso dos estudantes a ferramentas de prática fora do ambiente acadêmico</li>
+          <li>Necessidade de capacitação tanto para estudantes quanto para profissionais da área</li>
+        </ul>
+
+        <p><strong>Características Principais</strong></p>
+        <ul>
+          <li><strong>Interface Intuitiva</strong></li>
+          <li>Visualização em 2D clara e precisa para desenhos de torno</li>
+          <li>Três áreas integradas: Exercícios propostos, visualização em tempo real e editor de código G</li>
+          <li>Acessibilidade total: Funciona em computadores, tablets e smartphones sem necessidade de instalação</li>
+        </ul>
+
+        <p><strong>Metodologia Didática</strong></p>
+        <ul>
+          <li>Atividades estruturadas: Exercícios organizados por nível de dificuldade</li>
+          <li>Aprendizado progressivo: Do básico ao avançado</li>
+          <li>Verificação instantânea: Respostas disponíveis para conferência</li>
+          <li>Feedback visual: Comparação entre resultado esperado e obtido</li>
+        </ul>
+
+        <p><strong>Sistema de Exercícios</strong><br>
+        A plataforma conta com 10 exercícios cuidadosamente elaborados e organizados em 4 níveis de dificuldade:</p>
+        <ul>
+          <li>⭐ 1 Estrela - Nível Básico</li>
+          <li>Exercícios introdutórios focados exclusivamente em interpolação linear (G01).</li>
+          <li>⭐⭐ 2 Estrelas - Nível Intermediário</li>
+          <li>Introduz chanfros e exige maior habilidade na interpretação de desenhos técnicos.</li>
+          <li>⭐⭐⭐ 3 Estrelas - Nível Avançado</li>
+          <li>Inclui interpolação circular (G02 e G03), permitindo a criação de arcos e formas curvas.</li>
+          <li>⭐⭐⭐⭐ 4 Estrelas - Nível Expert</li>
+          <li>Combina interpolações lineares e circulares com cálculos trigonométricos.</li>
+        </ul>
+
+        <p><strong>Desenvolvimento Acadêmico</strong><br>
+        O PlatD-CNC foi desenvolvido como produto educacional no âmbito do Programa de Pós-Graduação em Ensino da Rede Nordeste de Ensino (RENOEN), linha de pesquisa "Ensino Tecnológico: Práticas e Construções Curriculares".</p>
+
+        <p><strong>Público-Alvo</strong></p>
+        <ul>
+          <li>Estudantes de cursos técnicos e de engenharia</li>
+          <li>Professores de disciplinas relacionadas a CNC</li>
+          <li>Profissionais da indústria</li>
+          <li>Empresas que desejam capacitar funcionários</li>
+        </ul>
+
+        <p><strong>Missão</strong><br>
+        Democratizar o acesso ao conhecimento em programação CNC, proporcionando uma ferramenta educacional gratuita, de qualidade e acessível, que prepare estudantes e profissionais para os desafios da indústria moderna.</p>
+        
+        <p><strong>Atualizações</strong><br>
+        1.0 - Implementação do menu "Arquivo":<br>
+        • Novo: cria um arquivo em branco;<br>
+        • Salvar: permite que o usuário salve o código desenvolvido;<br>
+        • Abrir: possibilita a abertura de arquivos criados anteriormente.<br>
+        1.1 - Implementação de tutorial interativo:<br>
+        Guia visual que explica a funcionalidade de cada componente do site.<br>
+        1.2 - Implementação de design responsivo (compatível com celular, tablet e desktop).<br>
+        1.3 - Implementação de função para espelhar peça.<br>
+        1.4 - Implementação de função para travar tela.
+        </p>
+        
+
+        <p><strong>Contato</strong><br>
+        E-mail: isac.barbosa@ifrn.edu.br</p>
+
+        <p style="text-align:center; margin-top:10px;">
+          <em>Desenvolvido no Brasil | IFRN – Campus Mossoró | RENOEN 2023–2027</em>
+        </p>
+      </div>
+    </div>
+  `;
+
+  // adiciona no body
+  document.body.insertAdjacentHTML("beforeend", aboutHTML);
+
+    // Habilita arrastar e redimensionar (jQuery UI precisa estar carregado)
+  $("#aboutWindow").draggable({ handle: ".cwsx-header" }).resizable({
+    minWidth: 320,
+    minHeight: 200,
+    alsoResize: "#aboutContent"
+  });
+
+  // evento do botão About
+  document.querySelector("li div span[title='Sobre']").parentElement.addEventListener("click", function() {
+    $("#aboutWindow").fadeIn();
+  });
+
+  // evento para fechar
+  $(document).on("click", "#closeAbout", function() {
+    $("#aboutWindow").fadeOut();
+  });
+});
+
+
+</script>
+<!-- Modal do Tutorial — arrastável e redimensionável -->
+<div id="tutorialModal">
+    <div id="tutorialHeader">
+        <span>Tutorial</span>
+        <button id="closeTutorial">&times;</button>
+    </div>
+    <div id="tutorialContent">
+        <!-- Vídeo MP4 -->
+        <video id="tutorialVideo" width="720" controls>
+            <source src="images/Plat - CNC.mp4" type="video/mp4">
+        </video>
+    </div>
+</div>
+
+</body>
+</html>
