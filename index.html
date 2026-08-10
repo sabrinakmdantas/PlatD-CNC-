@@ -344,48 +344,49 @@
   margin-left: 18px;
 }
 
-/* Fundo escuro */
+/* ======== Tutorial Modal — arrastável e redimensionável ======== */
 #tutorialModal {
     display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.75);
+    position: absolute;
+    background: #1e1b1b;
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px #132511;
     z-index: 99999;
-
+    overflow: hidden;
+    min-width: 320px;
+    min-height: 220px;
 }
 
-/* Caixa do vídeo */
-/*#tutorialContent {
-    background: #111;
-    padding: 20px;
-    border-radius: 10px;
-    position: relative;
-    box-shadow: 0 0 20px #000;
-}*/
+/* Header para arrastar */
+#tutorialHeader {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(#132511, #375020ff);
+    border-bottom: 1px solid #2b2b2b;
+    font-weight: 600;
+    color: #eee;
+    padding: 0 10px;
+    cursor: move;
+    user-select: none;
+}
+
 #tutorialContent {
     background: #1e1b1b;
     padding: 20px 24px;
-    border-radius: 10px;
-    position: absolute;
-    top: 0;
-    left: 0;
-    box-shadow: 0 10px 30px #132511;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: calc(100% - 36px);
+    box-sizing: border-box;
 }
 
-
 /* Botão X */
-/* (ajustado dentro da janela) */
 #closeTutorial {
-    position: absolute;
-    top: 8px;              /* move para dentro da caixa - estava 10 px antes */
-    right: 8px;
     background: #4b0d0d;
     color: #fff;
     padding: 4px 10px;
@@ -395,7 +396,6 @@
     border: none;
     border-radius: 6px;
     cursor: pointer;
-    z-index: 10;
     transition: background 0.2s ease, transform 0.1s ease;
 }
 #closeTutorial:hover {
@@ -403,11 +403,10 @@
     transform: scale(1.1);
 }
 
-
 /* Vídeo responsivo */
 #tutorialVideo {
-    max-width: 90vw;
-    max-height: 80vh;
+    max-width: 100%;
+    max-height: 100%;
     border-radius: 8px;
 }
 
@@ -442,19 +441,6 @@
 <body>
 <div id="editor"></div>
 <div id="topMenu">
-    <!-- Modal do Tutorial -->
-<div id="tutorialModal">
-    <div id="tutorialContent">
-        <span id="closeTutorial">&times;</span>
-
-        <!-- Vídeo MP4 -->
-        <video id="tutorialVideo" width="720" controls>
-            <source src="images/Plat - CNC.mp4" type="video/mp4">
-        </video>
-
-    </div>
-</div>
-
 <nav>
     <ul>
         <li><div id="fileButton"><span title="Arquivo" class="icon icon-folder-open"></span>Arquivo</div></li>
@@ -481,6 +467,13 @@
 
 <div id="canvasContainer">
     <div id="messages"></div>
+    <!-- adicionei - painel -->
+    <div id="sideToolsToggle" title="Ferramentas de visualização">⛶</div>
+    <div id="sideToolsPanel">
+        <button id="mirrorToggleBtn" class="sideToolsBtn">Espelhar peça</button>
+        <button id="lockViewToggleBtn" class="sideToolsBtn">Resetar tela</button>
+    </div>
+    <!-- termina aqui -->
 </div>
 
 <div id="exerciseWindow">
@@ -983,35 +976,47 @@ document.addEventListener("DOMContentLoaded", function () {
   }, 2000);
 });
 
-// Clicar no botão TUTORIAL
-document.querySelector("li div span[title='Tutorial']").parentElement.addEventListener("click", function () {
-    const modal = document.getElementById("tutorialModal");
-    const video = document.getElementById("tutorialVideo");
+//foi feito alterações para funcionar corretamente
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelector("li div span[title='Tutorial']").parentElement.addEventListener("click", function () {
+        const modal = document.getElementById("tutorialModal");
+        const video = document.getElementById("tutorialVideo");
 
-    modal.style.display = "flex";
-    video.currentTime = 0;  // reinicia
-    video.play();
-});
+        // Posiciona no centro da tela ao abrir (apenas na primeira vez)
+        if (!modal._positioned) {
+            modal.style.left = Math.max(0, (window.innerWidth - 760) / 2) + "px";
+            modal.style.top = Math.max(0, (window.innerHeight - 480) / 2) + "px";
+            modal.style.width = "760px";
+            modal.style.height = "480px";
+            modal._positioned = true;
+        }
 
-// Fechar ao clicar no X
-document.getElementById("closeTutorial").addEventListener("click", function () {
-    const modal = document.getElementById("tutorialModal");
-    const video = document.getElementById("tutorialVideo");
+        modal.style.display = "block";
+        video.currentTime = 0;
+        video.play();
+    });
 
-    modal.style.display = "none";
-    video.pause();
-});
-
-// Fechar ao clicar fora
-/*document.getElementById("tutorialModal").addEventListener("click", function (e) {
-    if (e.target === this) {
-        const modal = this;
+    // Fechar ao clicar no X
+    document.getElementById("closeTutorial").addEventListener("click", function () {
+        const modal = document.getElementById("tutorialModal");
         const video = document.getElementById("tutorialVideo");
 
         modal.style.display = "none";
         video.pause();
-    }
-});*/
+    });
+    //termina aqui
+});
+
+// === Tutorial draggable + resizable via jQuery UI ===
+document.addEventListener("DOMContentLoaded", function () {
+    $(function () {
+        $("#tutorialModal").draggable({ handle: "#tutorialHeader" }).resizable({
+            minWidth: 320,
+            minHeight: 220,
+            alsoResize: "#tutorialVideo"
+        });
+    });
+});
 
 // === About Window ===
 document.addEventListener("DOMContentLoaded", function() {
@@ -1081,13 +1086,15 @@ document.addEventListener("DOMContentLoaded", function() {
         Democratizar o acesso ao conhecimento em programação CNC, proporcionando uma ferramenta educacional gratuita, de qualidade e acessível, que prepare estudantes e profissionais para os desafios da indústria moderna.</p>
         
         <p><strong>Atualizações</strong><br>
-        1.0 - Implementação do menu “Arquivo”:<br>
+        1.0 - Implementação do menu "Arquivo":<br>
         • Novo: cria um arquivo em branco;<br>
         • Salvar: permite que o usuário salve o código desenvolvido;<br>
         • Abrir: possibilita a abertura de arquivos criados anteriormente.<br>
         1.1 - Implementação de tutorial interativo:<br>
         Guia visual que explica a funcionalidade de cada componente do site.<br>
-        1.2 - Implementação de design responsivo (compatível com celular, tablet e desktop).
+        1.2 - Implementação de design responsivo (compatível com celular, tablet e desktop).<br>
+        1.3 - Implementação de função para espelhar peça.<br>
+        1.4 - Implementação de função para travar tela.
         </p>
         
 
@@ -1124,5 +1131,19 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
 </script>
+<!-- Modal do Tutorial — arrastável e redimensionável -->
+<div id="tutorialModal">
+    <div id="tutorialHeader">
+        <span>Tutorial</span>
+        <button id="closeTutorial">&times;</button>
+    </div>
+    <div id="tutorialContent">
+        <!-- Vídeo MP4 -->
+        <video id="tutorialVideo" width="720" controls>
+            <source src="images/Plat - CNC.mp4" type="video/mp4">
+        </video>
+    </div>
+</div>
+
 </body>
 </html>
