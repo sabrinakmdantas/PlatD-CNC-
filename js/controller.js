@@ -771,7 +771,9 @@ CWS.Controller = function (editor,storage,renderer,motion,autoRun)
         this.autoRun = false;
         this._run3D = true;
         this._run2D = true;
-        this._runWireframe = false;  // troquei para false 
+        this._runWireframe = false;  //troquei para false 
+        this.mirrorEnabled = false;  //adicionei
+        this.viewLocked = false;     //adicionei
 
         this.createDatGUI();
         // Create controls
@@ -906,6 +908,11 @@ CWS.Controller.prototype.loadMachine = function()
             this.renderer.lookAtLathe({x:this.storage.workpiece.x,y:this.storage.workpiece.z});
             this.renderer.addMesh("2DWorkpiece",this.machine.mesh2D);
             this.renderer.addMesh("3DWorkpiece",this.machine.mesh3D);
+            //adicionei - espelhamento
+            if (this.machine.mesh2DMirror)
+                this.renderer.addMesh("2DWorkpieceMirror",this.machine.mesh2DMirror);
+            this.machine.setMirrorEnabled(this.mirrorEnabled === true);
+            //termina aqui
             this.updateWireframe();
             if (!this._runWireframe) {
             this.machine.meshWorkpiece.visible = false;
@@ -1175,6 +1182,10 @@ CWS.Controller.prototype.update2D = function()
         {
             this.machine.mesh2D.visible = false;
         }
+        //adicionei - espelhamento
+        if (this.machine.setMirrorEnabled)
+            this.machine.setMirrorEnabled(this.mirrorEnabled === true);
+        //termina aqui
     };
 
 CWS.Controller.prototype.update3D = function()
@@ -1213,3 +1224,35 @@ CWS.Controller.prototype.displayMessage = function(message,error)
                 $("#messages").css('color','black').text(message);
         }
     };
+
+//espelhamento
+CWS.Controller.prototype.toggleMirror = function(enabled)
+    {
+        this.mirrorEnabled = (enabled === undefined) ? !this.mirrorEnabled : (enabled === true);
+        if (this.machine && this.machine.setMirrorEnabled)
+            this.machine.setMirrorEnabled(this.mirrorEnabled);
+        return this.mirrorEnabled;
+    };
+
+CWS.Controller.prototype.resetToFrontView = function()
+    {
+        this.controls.target.set(0,0,0);
+        this.renderer.camera.up.set(0,1,0);
+        if (this.machine.mtype === "Lathe")
+            this.renderer.lookAtLathe({x:this.storage.workpiece.x,y:this.storage.workpiece.z});
+        else if (this.machine.mtype === "Mill")
+            this.renderer.lookAtMill({x:this.storage.workpiece.x,
+                        y:this.storage.workpiece.y,z:this.storage.workpiece.z});
+        else if (this.machine.mtype === "3D Printer")
+            this.renderer.lookAt3DPrinter(this.machine.boundingSphere.center, this.machine.boundingSphere.radius);
+    };
+
+CWS.Controller.prototype.toggleViewLocked = function(locked)
+    {
+        this.viewLocked = (locked === undefined) ? !this.viewLocked : (locked === true);
+        if (this.viewLocked)
+            this.resetToFrontView();
+        this.controls.noRotate = this.viewLocked;
+        return this.viewLocked;
+    };
+//termina aqui
