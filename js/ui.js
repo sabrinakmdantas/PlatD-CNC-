@@ -571,6 +571,29 @@ CWS.UI = function (controller)
 		{
 			controller.runAnimation();
 		});
+
+		//adicionei - botões do painel - ligar
+		$("#mirrorToggleBtn").toggleClass("active", controller.mirrorEnabled === true);
+		$("#lockViewToggleBtn").toggleClass("active", controller.viewLocked === true);
+
+		$("#sideToolsToggle").click(function (ev)
+		{
+			$("#sideToolsPanel").toggleClass("open");
+			$(this).toggleClass("open");
+		});
+
+		$("#mirrorToggleBtn").click(function (ev)
+		{
+			var on = controller.toggleMirror();
+			$(this).toggleClass("active", on);
+		});
+
+		$("#lockViewToggleBtn").click(function (ev)
+		{
+			var on = controller.toggleViewLocked();
+			$(this).toggleClass("active", on);
+		});
+		//termina aqui
 	}
 
 CWS.UI.prototype.constructor = CWS.UI;
