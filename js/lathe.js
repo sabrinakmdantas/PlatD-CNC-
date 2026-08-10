@@ -100,7 +100,18 @@ CWS.Lathe.prototype.initGeometry2D = function ()
 		mesh.rotation.y = Math.PI/2;
 		mesh.position.x = -this.workpiece.z/2;
         this.mesh2D = mesh; 
+
+        //espelhamento
+        var meshMirror = new THREE.LineSegments( geometry, this.material2D );
+        meshMirror.name = "2DWorkpieceMirror";
+        meshMirror.rotation.x = Math.PI/2;
+        meshMirror.rotation.y = Math.PI/2;
+        meshMirror.position.x = -this.workpiece.z/2;
+        meshMirror.scale.x = -1;
+        meshMirror.visible = false;
+        this.mesh2DMirror = meshMirror;
     }
+	    //termina aqui
 
 CWS.Lathe.prototype.initGeometry3D = function () 
 	{
