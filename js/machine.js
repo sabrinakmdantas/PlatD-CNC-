@@ -45,6 +45,15 @@ CWS.Machine.prototype.create2DWorkpiece = function ()
 		throw new Error( "call to abstract method" );
 	};
 
+//espelhamento
+CWS.Machine.prototype.setMirrorEnabled = function (enabled) 
+	{
+		this.mirrorEnabled = enabled === true;
+		if (this.mesh2DMirror)
+			this.mesh2DMirror.visible = this.mirrorEnabled && this.mesh2D.visible;
+	};
+//termina aqui
+
 CWS.Machine.prototype.create3DWorkpiece = function () 
 	{
 		throw new Error( "call to abstract method" );
@@ -110,6 +119,14 @@ CWS.Machine.prototype.create2DWorkpiece = function ()
 	        this.mesh2D.position.y = -this.workpiece.y/2;
 	        this.mesh2D.position.z = -this.workpiece.z/2;
     	}
+
+		//espelhamento
+		if (this.mesh2DMirror)
+		{
+			this.mesh2DMirror.position.copy(this.mesh2D.position);
+			this.mesh2DMirror.visible = (this.mirrorEnabled === true) && this.mesh2D.visible;
+		}
+		//termina aqui
 		if (this.meshes.mesh2D === true)
 			return;
 
