@@ -4,8 +4,8 @@
  * Arquivo modificado para o PlatD-CNC (2024-2026)
  * IFRN - Instituto Federal de Educacao, Ciencia e Tecnologia do RN
  *
- * Correcao da interpolacao circular G02/G03 implementada pela
- * equipe do PlatD-CNC.
+ * Controle das atividades didaticas, gestao de estado do exercicio
+ * em curso e integracao com o modulo de autocorrecao.
  *
  * Ver NOTICE.md para o detalhamento das modificacoes.
  
