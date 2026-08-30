@@ -9,7 +9,6 @@
  * IFRN - Instituto Federal de Educacao, Ciencia e Tecnologia do RN
  * Ver NOTICE.md para o detalhamento das modificacoes.
  
-
 CWS.Interpreter = function (machine) 
 	{
 		// Mill - Mill, Lathe - Lathe, 3D Printer - Printer
