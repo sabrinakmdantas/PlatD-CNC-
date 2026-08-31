@@ -1,14 +1,15 @@
 /**
  * @author Filipe Caixeta / http://filipecaixeta.com.br/
- *
+ * 
  * Arquivo modificado para o PlatD-CNC (2024-2026)
  * IFRN - Instituto Federal de Educacao, Ciencia e Tecnologia do RN
  *
- * Correcao da interpolacao circular G02/G03 e aprimoramento das
- * funçoes 2D.
+ * Interface em portugues, caixas de dialogo do modulo pedagogico,
+ * painel de atividades e pre-carregamento das imagens.
+ * 
  * Ver NOTICE.md para o detalhamento das modificacoes.
  */
- 
+/** 
 
 CWS.UI = function (controller) 
 	{

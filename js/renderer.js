@@ -1,11 +1,16 @@
 /**
  * @author Filipe Caixeta / http://filipecaixeta.com.br/
- *
+ *  
  * Arquivo modificado para o PlatD-CNC (2024-2026)
  * IFRN - Instituto Federal de Educacao, Ciencia e Tecnologia do RN
- * renderizador da interpolacao circular G02/G03.
+ *
+ * Correcao do renderizador implementada pela
+ * equipe do PlatD-CNC.
+ *
  * Ver NOTICE.md para o detalhamento das modificacoes.
- 
+ */
+/** 
+
 CWS.Renderer = function (id,options) 
 	{
 		options = options || {};

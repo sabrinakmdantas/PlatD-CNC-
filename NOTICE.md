@@ -24,11 +24,11 @@ Autoria: Filipe Caixeta.
 
 | Arquivo | Original | PlatD-CNC | Natureza da modificação |
 |---|---|---|---|
-| index.html | 143 linhas | 1.137 linhas | Reescrito: interface em português, painel de atividades, visualizador de enunciado e resposta, motor de autocorreção, seção institucional |
-| js/controller.js | 445 linhas | 1.215 linhas | Controle das atividades didáticas, gestão de estado do exercício em curso, integração com a autocorreção |
-| js/ui.js | 451 linhas | 1.055 linhas | Interface em português, caixas de diálogo do módulo pedagógico, pré-carregamento de imagens das atividades |
-| js/renderer.js | 180 linhas | 380 linhas | Ajustes de renderização para simulação 2D de torneamento em contexto didático |
-| js/interpreter.js | 771 linhas | 731 linhas | Correção da interpolação circular G02/G03 |
+| index.html | 143 linhas | 1.162 linhas | Reescrito: interface em português, painel de atividades, visualizador de enunciado e resposta, motor de autocorreção, seção institucional |
+| js/controller.js | 445 linhas | 1.266 linhas | Controle das atividades didáticas, gestão de estado do exercício em curso, integração com a autocorreção |
+| js/ui.js | 451 linhas | 1.086 linhas | Interface em português, caixas de diálogo do módulo pedagógico, pré-carregamento de imagens das atividades |
+| js/renderer.js | 180 linhas | 388 linhas | Ajustes de renderização para simulação 2D de torneamento em contexto didático |
+| js/interpreter.js | 771 linhas | 738 linhas | Correção da interpolação circular G02/G03 |
 | css/ui.css | — | — | Estilos do painel de atividades e do retorno visual da correção |
 | css/fontIcon.css | — | — | Ícones da interface didática |
 

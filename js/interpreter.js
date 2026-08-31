@@ -1,6 +1,6 @@
 /**
  * @author Filipe Caixeta / http://filipecaixeta.com.br/
- *
+ * 
  * Arquivo modificado para o PlatD-CNC (2024-2026)
  * IFRN - Instituto Federal de Educacao, Ciencia e Tecnologia do RN
  *
@@ -9,7 +9,7 @@
  *
  * Ver NOTICE.md para o detalhamento das modificacoes.
  */
- 
+
 CWS.Interpreter = function (machine) 
 	{
 		// Mill - Mill, Lathe - Lathe, 3D Printer - Printer
